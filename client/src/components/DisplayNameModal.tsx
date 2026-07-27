@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef } from 'react'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useLanguageStore } from '@/store/useLanguageStore'
 
@@ -24,23 +24,12 @@ function DisplayNameForm() {
     setDisplayName(trimmed, crypto.randomUUID())
   }
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key !== 'Tab' || !formRef.current) return
-    const focusable = formRef.current.querySelectorAll<HTMLElement>('input, button')
-    if (focusable.length < 2) return
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
-  }, [])
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       role="dialog"
       aria-modal="true"
       aria-labelledby="display-name-title"
-      onKeyDown={handleKeyDown}
     >
       <form
         ref={formRef}

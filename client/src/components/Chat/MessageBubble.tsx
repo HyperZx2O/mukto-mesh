@@ -1,4 +1,3 @@
-import { memo } from 'react'
 import { timeAgo } from '@/lib/utils'
 import type { ChatMessage } from '@/types'
 
@@ -6,7 +5,7 @@ interface Props {
   message: ChatMessage
 }
 
-export default memo(function MessageBubble({ message }: Props) {
+export default function MessageBubble({ message }: Props) {
   const isEmergency = message.channel === 'emergency'
 
   return (
@@ -18,4 +17,4 @@ export default memo(function MessageBubble({ message }: Props) {
       <p className="text-sm text-text-muted">{message.content}</p>
     </div>
   )
-})
+}

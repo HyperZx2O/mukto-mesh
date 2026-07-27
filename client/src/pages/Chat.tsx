@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Send } from 'lucide-react'
 import { useLanguageStore } from '@/store/useLanguageStore'
 import { useChatStore } from '@/store/useChatStore'
-import { useWs } from '@/lib/ws'
+import { useWs, sendMessage } from '@/lib/ws'
 import { CHANNELS } from '@/lib/constants'
 import type { Channel } from '@/types'
 import ChannelTab from '@/components/Chat/ChannelTab'
@@ -17,7 +17,7 @@ export default function Chat() {
   const unread = useChatStore((s) => s.unread)
   const setChannel = useChatStore((s) => s.setChannel)
   const clearUnread = useChatStore((s) => s.clearUnread)
-  const { connectionStatus, sendMessage } = useWs()
+  const connectionStatus = useWs((s) => s.connectionStatus)
 
   const [input, setInput] = useState('')
   const listRef = useRef<HTMLDivElement>(null)
