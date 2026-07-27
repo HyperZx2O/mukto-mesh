@@ -6,12 +6,11 @@ import path from 'path'
 export default defineConfig({
   plugins: [
     react(),
-    // ponytail: SW generation disabled — workbox's path parser chokes on apostrophes
-    // in the project directory name ('26 July Hackathon). SW will be re-enabled in
-    // Phase 9 after the project is moved to a path without special characters.
     VitePWA({
       registerType: 'autoUpdate',
-      selfDestroying: true,
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       manifest: {
         name: 'Mukto Mesh',
         short_name: 'MuktoMesh',

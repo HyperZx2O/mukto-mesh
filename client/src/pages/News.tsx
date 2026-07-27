@@ -73,6 +73,7 @@ export default function News() {
 
       {lastFetched && (
         <p className="text-xs text-text-muted">
+          {isOffline && <span className="mr-1">{t('[Cached]', '[ক্যাশে]')}</span>}
           {t('Last fetched', 'সর্বশেষ')}: {timeAgo(lastFetched)}
         </p>
       )}

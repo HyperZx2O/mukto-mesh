@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useLanguageStore } from '@/store/useLanguageStore'
 import { useAuthStore } from '@/store/useAuthStore'
+import { useOfflineStatus } from '@/hooks/useOfflineStatus'
 import { api } from '@/lib/api'
 import PostCard from '@/components/Noticeboard/PostCard'
 import NewPostForm from '@/components/Noticeboard/NewPostForm'
@@ -10,6 +11,7 @@ import type { Post, ApiResponse } from '@/types'
 export default function Noticeboard() {
   const lang = useLanguageStore((s) => s.lang)
   const isAdmin = useAuthStore((s) => s.isAdmin)
+  const isOffline = useOfflineStatus()
   const queryClient = useQueryClient()
   const t = (en: string, bn: string) => (lang === 'bn' ? bn : en)
 
@@ -40,6 +42,7 @@ export default function Noticeboard() {
         <h1 className="text-2xl font-bold text-text-primary uppercase tracking-wider">
           {t('Noticeboard', 'নোটিশ বোর্ড')}
         </h1>
+        {isOffline && <span className="text-xs text-text-muted">{t('Cached', 'ক্যাশে')}</span>}
         <NewPostForm />
       </div>
 

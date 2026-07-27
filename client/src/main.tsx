@@ -2,7 +2,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
+import { registerBackgroundSync } from './lib/sync'
 import './index.css'
+
+registerBackgroundSync()
 
 const queryClient = new QueryClient({
   defaultOptions: {

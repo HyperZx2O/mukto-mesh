@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import OfflineBadge from './OfflineBadge'
 import LanguageToggle from './LanguageToggle'
 import DisplayNameModal from './DisplayNameModal'
+import InstallPrompt from './InstallPrompt'
 
 const navItems = [
   { path: '/chat', label: 'Chat', labelBn: 'চ্যাট', icon: MessageSquare },
@@ -23,6 +24,7 @@ export default function Layout() {
     <div className="min-h-screen bg-background text-text-primary flex flex-col">
       <DisplayNameModal />
       <OfflineBadge />
+      <InstallPrompt />
 
       {/* Top bar */}
       <header className="h-16 flex items-center justify-between px-4 border-b border-border bg-background shrink-0">

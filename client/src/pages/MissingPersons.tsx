@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Search, UserPlus } from 'lucide-react'
 import { useLanguageStore } from '@/store/useLanguageStore'
+import { useOfflineStatus } from '@/hooks/useOfflineStatus'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type { MissingPerson, ApiResponse } from '@/types'
@@ -8,6 +9,7 @@ import MissingPersonForm from '@/components/MissingPersons/MissingPersonForm'
 
 export default function MissingPersons() {
   const lang = useLanguageStore((s) => s.lang)
+  const isOffline = useOfflineStatus()
   const t = (en: string, bn: string) => (lang === 'bn' ? bn : en)
   const [tab, setTab] = useState<'search' | 'submit'>('search')
   const [search, setSearch] = useState('')
@@ -90,7 +92,13 @@ export default function MissingPersons() {
             </div>
           )}
 
-          {isError && (
+          {isOffline && (
+            <div className="bg-surface border border-border p-2">
+              <p className="text-xs text-text-muted">{t('Showing cached reports.', 'ক্যাশে করা রিপোর্ট দেখানো হচ্ছে।')}</p>
+            </div>
+          )}
+
+          {isError && !isOffline && (
             <div className="border border-danger/30 bg-danger/10 p-4">
               <p className="text-sm text-danger">
                 {t('Could not load reports.', 'রিপোর্ট লোড করা যায়নি।')}
