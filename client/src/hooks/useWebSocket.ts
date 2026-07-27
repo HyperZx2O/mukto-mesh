@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
-
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000/ws'
+import { WS_URL } from '@/lib/config'
 const MAX_RETRIES = 5
 
 export function useWebSocket(onMessage: (data: any) => void) {
@@ -13,7 +12,7 @@ export function useWebSocket(onMessage: (data: any) => void) {
     ws.current.onmessage = (e) => {
       try {
         onMessage(JSON.parse(e.data))
-      } catch {}
+      } catch { /* malformed JSON — skip */ }
     }
 
     ws.current.onclose = () => {
