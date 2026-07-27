@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
-type Language = 'en' | 'bn'
+import type { Language } from '@/types'
 
 interface LanguageState {
   lang: Language

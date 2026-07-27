@@ -1,11 +1,14 @@
 import { API_URL } from './config'
+import { useAuthStore } from '@/store/useAuthStore'
+import type { ApiResponse } from '@/types'
 
-async function request<T>(path: string, options?: RequestInit): Promise<{ data: T | null; error: string | null }> {
+async function request<T>(path: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const res = await fetch(`${API_URL}${path}`, {
-      headers: { 'Content-Type': 'application/json' },
-      ...options,
-    })
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    const token = useAuthStore.getState().adminToken
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    const res = await fetch(`${API_URL}${path}`, { headers, ...options })
     return await res.json()
   } catch {
     return { data: null, error: 'Network error — you may be offline' }

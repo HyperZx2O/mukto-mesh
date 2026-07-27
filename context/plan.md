@@ -138,9 +138,9 @@ These rules apply to every phase. Non-negotiable.
 
 ## Phase Checklist
 
-- [ ] Phase 0: Requirements & Architecture
-- [ ] Phase 1: Project Scaffold & Skeleton
-- [ ] Phase 2: Types, Constants & API Client
+- [x] Phase 0: Requirements & Architecture
+- [x] Phase 1: Project Scaffold & Skeleton
+- [x] Phase 2: Types, Constants & API Client
 - [ ] Phase 3: Shell — Routing, Layout, Navigation & Theme
 - [ ] Phase 4: Static Features — Knowledge Base & News Feed
 - [ ] Phase 5: Real-Time — Chat & Live Noticeboard
