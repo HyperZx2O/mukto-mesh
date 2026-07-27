@@ -141,7 +141,7 @@ These rules apply to every phase. Non-negotiable.
 - [x] Phase 0: Requirements & Architecture
 - [x] Phase 1: Project Scaffold & Skeleton
 - [x] Phase 2: Types, Constants & API Client
-- [ ] Phase 3: Shell — Routing, Layout, Navigation & Theme
+- [x] Phase 3: Shell — Routing, Layout, Navigation & Theme
 - [ ] Phase 4: Static Features — Knowledge Base & News Feed
 - [ ] Phase 5: Real-Time — Chat & Live Noticeboard
 - [ ] Phase 6: Forms — Missing Persons & Check-in
@@ -579,14 +579,14 @@ client/
 
 ### Acceptance Criteria
 
-- [ ] All 8 routes render their stub page without errors.
-- [ ] Bottom nav is visible on mobile; sidebar on desktop.
-- [ ] Language toggle switches the `language` state; the active language is highlighted.
-- [ ] Display name modal appears on first visit and cannot be dismissed without entering a name.
-- [ ] Offline badge appears when `navigator.onLine` is false (test via DevTools → Network → Offline).
-- [ ] Admin route shows "Not authorised" when no admin token is present.
-- [ ] All tap targets are minimum 44px height.
-- [ ] Zero hardcoded colours — all via CSS token variables.
+- [x] All 8 routes render their stub page without errors.
+- [x] Bottom nav is visible on mobile; sidebar on desktop.
+- [x] Language toggle switches the `language` state; the active language is highlighted.
+- [x] Display name modal appears on first visit and cannot be dismissed without entering a name.
+- [ ] Offline badge appears when `navigator.onLine` is false (test via DevTools → Network → Offline). — **requires manual browser test**
+- [x] Admin route shows "Not authorised" when no admin token is present.
+- [x] All tap targets are minimum 44px height.
+- [x] Zero hardcoded colours — all via CSS token variables.
 
 ### AI Agent Guidance
 

@@ -1,8 +1,5 @@
+import PageStub from '@/components/PageStub'
+
 export default function CheckIn() {
-  return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold">CheckIn</h1>
-      <p className="text-text-muted mt-2">TODO: implement</p>
-    </div>
-  )
+  return <PageStub title="Check-In" titleBn="চেক-ইন" />
 }
