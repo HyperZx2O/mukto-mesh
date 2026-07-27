@@ -142,7 +142,7 @@ These rules apply to every phase. Non-negotiable.
 - [x] Phase 1: Project Scaffold & Skeleton
 - [x] Phase 2: Types, Constants & API Client
 - [x] Phase 3: Shell — Routing, Layout, Navigation & Theme
-- [ ] Phase 4: Static Features — Knowledge Base & News Feed
+- [x] Phase 4: Static Features — Knowledge Base & News Feed
 - [ ] Phase 5: Real-Time — Chat & Live Noticeboard
 - [ ] Phase 6: Forms — Missing Persons & Check-in
 - [ ] Phase 7: Map — Offline Bangladesh Map with Pins
@@ -646,14 +646,14 @@ client/
 
 ### Acceptance Criteria
 
-- [ ] All 5 knowledge base sections render in both Bangla and English.
-- [ ] Language toggle on the knowledge base page switches content instantly with no network request.
-- [ ] Client-side search filters sections correctly.
-- [ ] Knowledge base content is fully readable with the network tab showing no requests.
-- [ ] News feed displays articles from `GET /api/news` via TanStack Query.
-- [ ] Refresh button is disabled when offline.
-- [ ] All three states (loading, error, empty) are implemented for the news feed.
-- [ ] Knowledge base content is production-quality, not placeholder text.
+- [x] All 5 knowledge base sections render in both Bangla and English.
+- [x] Language toggle on the knowledge base page switches content instantly with no network request.
+- [x] Client-side search filters sections correctly.
+- [ ] Knowledge base content is fully readable with the network tab showing no requests. — **requires manual browser test (service worker caching)**
+- [x] News feed displays articles from `GET /api/news` via TanStack Query.
+- [x] Refresh button is disabled when offline.
+- [x] All three states (loading, error, empty) are implemented for the news feed.
+- [x] Knowledge base content is production-quality, not placeholder text.
 
 ### AI Agent Guidance
 
