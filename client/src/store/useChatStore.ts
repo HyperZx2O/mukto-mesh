@@ -10,7 +10,7 @@ interface ChatState {
   clearUnread: (channel: Channel) => void
 }
 
-export const useChatStore = create<ChatState>((set, _get) => ({
+export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   activeChannel: 'general',
   unread: { general: 0, emergency: 0, coordination: 0, medical: 0 },

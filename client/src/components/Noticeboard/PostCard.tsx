@@ -1,5 +1,6 @@
 import { Pin, Trash2 } from 'lucide-react'
 import { useLanguageStore } from '@/store/useLanguageStore'
+import { timeAgo } from '@/lib/utils'
 import type { Post, PostTag } from '@/types'
 
 function tagBadgeClass(tag: PostTag): string {
@@ -20,18 +21,6 @@ const TAG_LABELS: Record<PostTag, { en: string; bn: string }> = {
   legal: { en: 'Legal', bn: 'আইনি' },
   news: { en: 'News', bn: 'সংবাদ' },
   general: { en: 'General', bn: 'সাধারণ' },
-}
-
-function timeAgo(timestamp: number): string {
-  const seconds = Math.floor((Date.now() - timestamp) / 1000)
-  if (seconds < 60) return 'just now'
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d ago`
-  return new Date(timestamp).toLocaleDateString()
 }
 
 interface Props {

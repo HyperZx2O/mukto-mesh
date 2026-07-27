@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/useAuthStore'
 import { useChatStore } from '@/store/useChatStore'
 import { useQueryClient } from '@tanstack/react-query'
 
-export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
+type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
 interface WsContextValue {
   connectionStatus: ConnectionStatus

@@ -76,14 +76,4 @@ export interface ApiResponse<T> {
   error: string | null
 }
 
-export type WsEventType =
-  | 'message'
-  | 'post_created'
-  | 'post_pinned'
-  | 'checkin_flagged'
-  | 'broadcast'
 
-export interface WsMessage {
-  type: WsEventType
-  payload: unknown
-}

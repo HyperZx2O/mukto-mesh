@@ -84,9 +84,6 @@ export default function KnowledgeBase() {
         ))}
       </div>
 
-      {/* [STUB] loading state — not triggerable for bundled content */}
-      <div className="hidden" />
-
       {/* Active section content */}
       {filtered.length === 0 ? (
         <p className="text-text-muted py-8 text-center">
@@ -100,8 +97,6 @@ export default function KnowledgeBase() {
         />
       ) : null}
 
-      {/* [STUB] error state — not triggerable for bundled content */}
-      <div className="hidden" />
     </div>
   )
 }

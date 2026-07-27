@@ -3,11 +3,10 @@ import { Send } from 'lucide-react'
 import { useLanguageStore } from '@/store/useLanguageStore'
 import { useChatStore } from '@/store/useChatStore'
 import { useWs } from '@/lib/ws'
+import { CHANNELS } from '@/lib/constants'
+import type { Channel } from '@/types'
 import ChannelTab from '@/components/Chat/ChannelTab'
 import MessageBubble from '@/components/Chat/MessageBubble'
-import type { Channel } from '@/types'
-
-const CHANNELS: Channel[] = ['general', 'emergency', 'coordination', 'medical']
 
 export default function Chat() {
   const lang = useLanguageStore((s) => s.lang)

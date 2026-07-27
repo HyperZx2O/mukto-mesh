@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/useAuthStore'
 import { useMutation } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { CHECKIN_INTERVALS } from '@/lib/constants'
+import { PHONE_REGEX } from '@/lib/utils'
 
 interface Props {
   onRegistered: (id: string) => void
@@ -33,7 +34,7 @@ export default function CheckInForm({ onRegistered }: Props) {
     e.preventDefault()
     let valid = true
     if (!name.trim()) { setNameError(t('Name is required', 'নাম প্রয়োজনীয়')); valid = false }
-    if (!phone.trim() || !/^(?:\+880|01)\d{9,10}$/.test(phone.trim())) {
+    if (!phone.trim() || !PHONE_REGEX.test(phone.trim())) {
       setPhoneError(t('Invalid phone number', 'অবৈধ ফোন নম্বর')); valid = false
     }
     if (!valid) return

@@ -3,6 +3,7 @@ import { useLanguageStore } from '@/store/useLanguageStore'
 import { useOfflineStatus } from '@/hooks/useOfflineStatus'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { PHONE_REGEX } from '@/lib/utils'
 import type { MissingPerson } from '@/types'
 
 interface Props {
@@ -65,7 +66,7 @@ export default function MissingPersonForm({ onSuccess }: Props) {
     if (!contactName.trim()) errs.contactName = t('This field is required', 'এই ক্ষেত্রটি প্রয়োজনীয়')
     if (!contactPhone.trim()) {
       errs.contactPhone = t('This field is required', 'এই ক্ষেত্রটি প্রয়োজনীয়')
-    } else if (!/^(?:\+880|01)\d{9,10}$/.test(contactPhone.trim())) {
+    } else if (!PHONE_REGEX.test(contactPhone.trim())) {
       errs.contactPhone = t('Invalid phone number', 'অবৈধ ফোন নম্বর')
     }
     setErrors(errs)
