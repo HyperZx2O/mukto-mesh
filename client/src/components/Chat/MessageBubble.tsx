@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { ChatMessage } from '@/types'
 
 function timeAgo(timestamp: number): string {
@@ -16,7 +17,7 @@ interface Props {
   message: ChatMessage
 }
 
-export default function MessageBubble({ message }: Props) {
+export default memo(function MessageBubble({ message }: Props) {
   const isEmergency = message.channel === 'emergency'
 
   return (
@@ -28,6 +29,6 @@ export default function MessageBubble({ message }: Props) {
       <p className="text-sm text-text-muted">{message.content}</p>
     </div>
   )
-}
+})
 
 export { timeAgo }
