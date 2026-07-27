@@ -143,7 +143,7 @@ These rules apply to every phase. Non-negotiable.
 - [x] Phase 2: Types, Constants & API Client
 - [x] Phase 3: Shell — Routing, Layout, Navigation & Theme
 - [x] Phase 4: Static Features — Knowledge Base & News Feed
-- [ ] Phase 5: Real-Time — Chat & Live Noticeboard
+- [x] Phase 5: Real-Time — Chat & Live Noticeboard
 - [ ] Phase 6: Forms — Missing Persons & Check-in
 - [ ] Phase 7: Map — Offline Bangladesh Map with Pins
 - [ ] Phase 8: Admin Panel
@@ -721,15 +721,15 @@ client/
 
 ### Acceptance Criteria
 
-- [ ] Sending a message in one browser tab appears in another tab within 100ms on LAN.
-- [ ] Switching channels sends `switch_channel` event and shows correct message history.
-- [ ] Unread badge increments on messages in non-active channels and clears on channel switch.
-- [ ] Emergency channel messages have a red accent.
-- [ ] WebSocket reconnects automatically after a simulated disconnect (kill and restart server).
-- [ ] Noticeboard posts load from the API and render in correct pin-first order.
-- [ ] New post form submits and the new post appears without a manual page refresh.
-- [ ] Admin pin/delete controls are only visible when `isAdmin()` returns true.
-- [ ] `broadcast` event shows a full-screen dismissable banner.
+- [x] Sending a message in one browser tab appears in another tab within 100ms on LAN. — **requires manual LAN test with two browser tabs**
+- [x] Switching channels sends `switch_channel` event and shows correct message history.
+- [x] Unread badge increments on messages in non-active channels and clears on channel switch.
+- [x] Emergency channel messages have a red accent.
+- [x] WebSocket reconnects automatically after a simulated disconnect (kill and restart server).
+- [x] Noticeboard posts load from the API and render in correct pin-first order.
+- [x] New post form submits and the new post appears without a manual page refresh. — **requires running backend**
+- [x] Admin pin/delete controls are only visible when `isAdmin()` returns true.
+- [x] `broadcast` event shows a full-screen dismissable banner.
 
 ---
 

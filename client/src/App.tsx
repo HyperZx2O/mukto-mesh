@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { WsProvider } from '@/lib/ws'
 import Layout from '@/components/Layout'
 import Dashboard from '@/pages/Dashboard'
 import Chat from '@/pages/Chat'
@@ -13,19 +14,21 @@ import Admin from '@/pages/Admin'
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/board" element={<Noticeboard />} />
-          <Route path="/info/*" element={<KnowledgeBase />} />
-          <Route path="/checkin" element={<CheckIn />} />
-          <Route path="/people" element={<MissingPersons />} />
-          <Route path="/news" element={<News />} />
-          <Route path="/map" element={<Map />} />
-          <Route path="/admin" element={<Admin />} />
-        </Route>
-      </Routes>
+      <WsProvider>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/board" element={<Noticeboard />} />
+            <Route path="/info/*" element={<KnowledgeBase />} />
+            <Route path="/checkin" element={<CheckIn />} />
+            <Route path="/people" element={<MissingPersons />} />
+            <Route path="/news" element={<News />} />
+            <Route path="/map" element={<Map />} />
+            <Route path="/admin" element={<Admin />} />
+          </Route>
+        </Routes>
+      </WsProvider>
     </BrowserRouter>
   )
 }
