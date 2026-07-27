@@ -3,6 +3,7 @@ import { Shield } from 'lucide-react'
 import { useLanguageStore } from '@/store/useLanguageStore'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { useToast } from '@/components/Toast'
 import type { Checkin, ApiResponse } from '@/types'
 
 function formatCountdown(ms: number): string {
@@ -33,9 +34,11 @@ export default function CheckInStatus({ checkinId }: Props) {
     refetchInterval: 30_000,
   })
 
+  const toast = useToast()
+
   const pingMutation = useMutation({
     mutationFn: () => api.post(`/checkin/ping`, { id: checkinId }),
-    onSuccess: () => setNow(Date.now()),
+    onSuccess: () => { setNow(Date.now()); toast.toast(t("I'm Safe ping sent", 'আমি নিরাপদ পিং পাঠানো হয়েছে')) },
   })
 
   if (isLoading) {

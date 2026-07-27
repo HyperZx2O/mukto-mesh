@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { WsProvider } from '@/lib/ws'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
 import Dashboard from '@/pages/Dashboard'
 import Chat from '@/pages/Chat'
@@ -15,6 +16,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <WsProvider>
+        <ErrorBoundary>
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
@@ -28,6 +30,7 @@ export default function App() {
             <Route path="/admin" element={<Admin />} />
           </Route>
         </Routes>
+        </ErrorBoundary>
       </WsProvider>
     </BrowserRouter>
   )

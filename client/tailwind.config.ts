@@ -14,7 +14,7 @@ export default {
         'text-muted': 'var(--color-muted)',
       },
       fontFamily: {
-        sans: ['system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Noto Sans Bengali', 'Hind Siliguri', 'system-ui', '-apple-system', 'sans-serif'],
       },
     },
   },

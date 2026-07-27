@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { MessageSquare, ClipboardList, BookOpen, Users, MapPin, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ToastProvider } from './Toast'
 import OfflineBadge from './OfflineBadge'
 import LanguageToggle from './LanguageToggle'
 import DisplayNameModal from './DisplayNameModal'
@@ -21,6 +22,7 @@ export default function Layout() {
     pathname === path || pathname.startsWith(path + '/')
 
   return (
+    <ToastProvider>
     <div className="min-h-screen bg-background text-text-primary flex flex-col">
       <DisplayNameModal />
       <OfflineBadge />
@@ -101,5 +103,6 @@ export default function Layout() {
         })}
       </nav>
     </div>
+    </ToastProvider>
   )
 }

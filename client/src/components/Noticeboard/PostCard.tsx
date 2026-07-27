@@ -60,14 +60,14 @@ export default function PostCard({ post, isAdmin, onPin, onDelete }: Props) {
             <button
               onClick={() => onPin(post.id, !post.pinned)}
               className="p-2 text-text-muted hover:text-text-primary min-h-[44px] min-w-[44px] flex items-center justify-center"
-              title={post.pinned ? t('Unpin', 'আনপিন') : t('Pin', 'পিন')}
+              aria-label={post.pinned ? t('Unpin', 'আনপিন') : t('Pin', 'পিন')}
             >
               <Pin size={16} />
             </button>
             <button
               onClick={() => onDelete(post.id)}
               className="p-2 text-text-muted hover:text-danger min-h-[44px] min-w-[44px] flex items-center justify-center"
-              title={t('Delete', 'মুছুন')}
+              aria-label={t('Delete', 'মুছুন')}
             >
               <Trash2 size={16} />
             </button>

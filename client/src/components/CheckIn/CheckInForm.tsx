@@ -17,6 +17,7 @@ export default function CheckInForm({ onRegistered }: Props) {
   const [name, setName] = useState(displayName)
   const [phone, setPhone] = useState('')
   const [interval, setInterval] = useState<2 | 4 | 6 | 12>(2)
+  const [nameError, setNameError] = useState('')
   const [phoneError, setPhoneError] = useState('')
 
   const mutation = useMutation({
@@ -30,11 +31,13 @@ export default function CheckInForm({ onRegistered }: Props) {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
+    let valid = true
+    if (!name.trim()) { setNameError(t('Name is required', 'নাম প্রয়োজনীয়')); valid = false }
     if (!phone.trim() || !/^(?:\+880|01)\d{9,10}$/.test(phone.trim())) {
-      setPhoneError(t('Invalid phone number', 'অবৈধ ফোন নম্বর'))
-      return
+      setPhoneError(t('Invalid phone number', 'অবৈধ ফোন নম্বর')); valid = false
     }
-    setPhoneError('')
+    if (!valid) return
+    setNameError(''); setPhoneError('')
     mutation.mutate()
   }
 
@@ -44,7 +47,8 @@ export default function CheckInForm({ onRegistered }: Props) {
         <label className="text-sm font-bold text-text-primary uppercase tracking-wider">
           {t('Display Name', 'প্রদর্শনের নাম')}
         </label>
-        <input value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary" />
+        <input value={name} onChange={(e) => { setName(e.target.value); setNameError('') }} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary" />
+        {nameError && <p className="text-xs text-danger">{nameError}</p>}
       </div>
 
       <div className="space-y-1">
