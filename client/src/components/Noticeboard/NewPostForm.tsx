@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Loader2 } from 'lucide-react'
 import { useLanguageStore } from '@/store/useLanguageStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type { PostTag } from '@/types'
@@ -24,7 +25,10 @@ export default function NewPostForm() {
   const t = (en: string, bn: string) => (lang === 'bn' ? bn : en)
 
   const mutation = useMutation({
-    mutationFn: () => api.post('/posts', { tag, content }),
+    mutationFn: () => {
+      const { displayName, userId } = useAuthStore.getState()
+      return api.post('/posts', { display_name: displayName, user_id: userId, tag, content })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       setContent('')
@@ -43,7 +47,7 @@ export default function NewPostForm() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-4 py-3 text-sm font-bold uppercase tracking-wider border border-border bg-surface text-text-primary hover:text-text-primary min-h-[44px]"
+        className="btn-ghost flex items-center gap-2"
       >
         <Plus size={16} />
         {t('New Post', 'নতুন পোস্ট')}
@@ -72,7 +76,7 @@ export default function NewPostForm() {
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        className="w-full bg-background border border-border text-text-primary p-3 text-sm outline-none focus:border-primary resize-none"
+        className="input-field resize-none"
         rows={3}
         placeholder={t('Write your post...', 'আপনার পোস্ট লিখুন...')}
       />
@@ -80,7 +84,7 @@ export default function NewPostForm() {
         <button
           type="submit"
           disabled={!content.trim() || mutation.isPending}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase tracking-wider bg-primary text-white disabled:opacity-50 min-h-[44px]"
+          className="btn-primary flex items-center gap-2"
         >
           {mutation.isPending && <Loader2 size={16} className="animate-spin" />}
           {t('Post', 'পোস্ট')}
@@ -88,7 +92,7 @@ export default function NewPostForm() {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="px-4 py-2 text-sm font-bold uppercase tracking-wider border border-border text-text-muted hover:text-text-primary min-h-[44px]"
+          className="btn-ghost"
         >
           {t('Cancel', 'বাতিল')}
         </button>

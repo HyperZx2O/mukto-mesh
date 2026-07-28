@@ -48,16 +48,19 @@ export function createWSHandler() {
     },
 
     onMessage(evt: { data: string | Buffer }, ws: WsClient['ws']) {
-      let msg: any
-      try { msg = JSON.parse(String(evt.data)) } catch { return }
+      let parsed: Record<string, unknown>
+      try { parsed = JSON.parse(String(evt.data)) as Record<string, unknown> } catch { return }
 
       const client = findClient(ws)
       if (!client) return
 
-      switch (msg.type) {
+      const msgType = String(parsed.type || '')
+
+      switch (msgType) {
         case WsEvent.JOIN: {
-          client.displayName = msg.displayName || 'Anonymous'
-          client.channel = (CHANNELS.includes(msg.channel) ? msg.channel : 'general') as Channel
+          client.displayName = String(parsed.displayName || 'Anonymous')
+          const ch = String(parsed.channel || 'general')
+          client.channel = (CHANNELS.includes(ch as Channel) ? ch : 'general') as Channel
 
           const messages = getLastMessages(client.channel, 50)
           send(ws, { type: 'join_ack', channel: client.channel, messages })
@@ -65,23 +68,26 @@ export function createWSHandler() {
         }
 
         case WsEvent.MESSAGE: {
-          if (!msg.content || !CHANNELS.includes(msg.channel)) return
+          const channel = String(parsed.channel || '')
+          const content = String(parsed.content || '')
+          if (!content || !CHANNELS.includes(channel as Channel)) return
 
           const { id, createdAt } = createMessage({
             user_id: client.id, display_name: client.displayName,
-            channel: msg.channel, content: msg.content,
+            channel, content,
           })
 
-          broadcastToChannel(msg.channel as Channel, {
-            type: WsEvent.WS_MESSAGE, id, displayName: client.displayName,
-            channel: msg.channel, content: msg.content, createdAt,
+          broadcastToChannel(channel as Channel, {
+            type: WsEvent.MESSAGE, id, displayName: client.displayName,
+            channel, content, createdAt,
           })
           break
         }
 
         case WsEvent.SWITCH_CHANNEL: {
-          if (!CHANNELS.includes(msg.channel)) return
-          client.channel = msg.channel as Channel
+          const ch = String(parsed.channel || '')
+          if (!CHANNELS.includes(ch as Channel)) return
+          client.channel = ch as Channel
 
           const messages = getLastMessages(client.channel, 50)
           send(ws, { type: 'join_ack', channel: client.channel, messages })

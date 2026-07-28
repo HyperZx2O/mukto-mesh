@@ -11,8 +11,8 @@ export async function syncToRemote(): Promise<void> {
     return
   }
 
-  const unsyncedMissing = getUnsyncedMissing() as any[]
-  const unsyncedPins = getUnsyncedPins() as any[]
+  const unsyncedMissing = getUnsyncedMissing() as Record<string, unknown>[]
+  const unsyncedPins = getUnsyncedPins() as Record<string, unknown>[]
 
   if (unsyncedMissing.length === 0 && unsyncedPins.length === 0) return
 
@@ -26,7 +26,7 @@ export async function syncToRemote(): Promise<void> {
         body: JSON.stringify({ entries: unsyncedMissing }),
       })
       if (res.ok) {
-        const ids = unsyncedMissing.map((e: any) => e.id)
+        const ids = unsyncedMissing.map((e: Record<string, unknown>) => String(e.id))
         markMissingSynced(ids)
         log.info(`Synced ${ids.length} missing persons`)
       } else {
@@ -45,7 +45,7 @@ export async function syncToRemote(): Promise<void> {
         body: JSON.stringify({ pins: unsyncedPins }),
       })
       if (res.ok) {
-        const ids = unsyncedPins.map((p: any) => p.id)
+        const ids = unsyncedPins.map((p: Record<string, unknown>) => String(p.id))
         markPinsSynced(ids)
         log.info(`Synced ${ids.length} map pins`)
       } else {

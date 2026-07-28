@@ -35,12 +35,12 @@ export function markPinsSynced(ids: string[]) {
   db.prepare(`UPDATE map_pins SET synced = 1 WHERE id IN (${ids.map(() => '?').join(',')})`).run(...ids)
 }
 
-export function upsertPinBatch(pins: any[]) {
+export function upsertPinBatch(pins: Record<string, unknown>[]) {
   const db = getDB()
   const insert = db.prepare(
     'INSERT OR IGNORE INTO map_pins (id, label, type, lat, lng, description, user_id, synced, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)'
   )
-  const insertMany = db.transaction((items: any[]) => {
+  const insertMany = db.transaction((items: Record<string, unknown>[]) => {
     for (const p of items) insert.run(p.id, p.label, p.type, p.lat, p.lng, p.description, p.user_id, p.created_at)
   })
   insertMany(pins)

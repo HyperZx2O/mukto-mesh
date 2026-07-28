@@ -44,8 +44,8 @@ export default function Chat() {
   }
 
   const statusColor =
-    connectionStatus === 'connected' ? 'bg-green-500' :
-    connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'
+    connectionStatus === 'connected' ? 'bg-success' :
+    connectionStatus === 'connecting' ? 'bg-warning' : 'bg-danger'
 
   const statusText =
     connectionStatus === 'connected' ? t('Connected', 'সংযুক্ত') :
@@ -54,10 +54,10 @@ export default function Chat() {
     t('Disconnected', 'সংযোগ বিচ্ছিন্ন')
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)]">
+    <div className="flex flex-col h-[calc(100dvh-4rem)] lg:h-[calc(100dvh-4rem)]">
       <div className="flex items-center gap-2 px-4 py-2 border-b border-border">
         <span className={`w-2 h-2 rounded-full ${statusColor}`} />
-        <span className="text-xs text-text-muted uppercase tracking-wider">{statusText}</span>
+        <span className="text-caption text-text-muted uppercase tracking-wider">{statusText}</span>
       </div>
 
       <div className="flex gap-1 px-4 py-3 border-b border-border overflow-x-auto">
@@ -89,13 +89,13 @@ export default function Chat() {
           autoFocus
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="flex-1 bg-surface border border-border text-text-primary px-4 py-3 text-sm outline-none focus:border-primary min-h-[44px]"
+          className="input-field"
           placeholder={t('Type a message...', 'বার্তা লিখুন...')}
         />
         <button
           type="submit"
           disabled={!input.trim()}
-          className="flex items-center gap-2 px-4 py-3 text-sm font-bold uppercase tracking-wider bg-primary text-white disabled:opacity-50 min-h-[44px]"
+          className="btn-primary flex items-center gap-2"
         >
           <Send size={16} />
           {t('Send', 'পাঠান')}

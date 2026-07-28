@@ -30,7 +30,7 @@ export default function CheckInStatus({ checkinId }: Props) {
 
   const { data, isLoading, isError } = useQuery<ApiResponse<Checkin>>({
     queryKey: ['checkin', checkinId],
-    queryFn: () => api.get<Checkin>(`/checkin/${checkinId}`),
+    queryFn: () => api.get<Checkin>(`/checkin/lookup/${checkinId}`),
     refetchInterval: 30_000,
   })
 
@@ -53,8 +53,8 @@ export default function CheckInStatus({ checkinId }: Props) {
 
   if (isError || !data?.data) {
     return (
-      <div className="border border-danger/30 bg-danger/10 p-4">
-        <p className="text-sm text-danger">
+      <div className="error-state">
+        <p className="text-body text-danger">
           {t('Could not load check-in status.', 'চেক-ইন স্ট্যাটাস লোড করা যায়নি।')}
         </p>
       </div>
@@ -70,35 +70,35 @@ export default function CheckInStatus({ checkinId }: Props) {
   return (
     <div className="space-y-6 max-w-md">
       {isUnresponsive && (
-        <div className="border border-danger bg-danger/10 p-4">
-          <p className="text-sm font-bold text-danger uppercase tracking-wider">
+        <div className="error-state">
+          <p className="text-body font-bold text-danger uppercase tracking-wider">
             {t('You have been flagged as unresponsive', 'আপনাকে অনুত্তরিত হিসাবে চিহ্নিত করা হয়েছে')}
           </p>
         </div>
       )}
 
-      <div className="bg-surface border border-border p-6 space-y-4 text-center">
+      <div className="card p-6 space-y-4 text-center">
         <div className="flex items-center justify-center gap-2 text-text-muted">
           <Shield size={16} />
-          <span className="text-sm">{t('You are registered.', 'আপনি নিবন্ধিত।')}</span>
+          <span className="text-body">{t('You are registered.', 'আপনি নিবন্ধিত।')}</span>
         </div>
 
-        <p className="text-sm text-text-muted">
+        <p className="text-body text-text-muted">
           {t("Tap 'I'm Safe' before", "এখানে ক্লিক করুন 'আমি নিরাপদ' এর আগে")}
         </p>
 
-        <p className="text-3xl font-bold text-text-primary tabular-nums tracking-tight">
+        <p className="stat-value text-text-heading">
           {formatCountdown(remaining)}
         </p>
 
-        <p className="text-xs text-text-muted">
+        <p className="text-caption text-text-muted">
           {t('Deadline', 'সময়সীমা')}: {deadlineDate.toLocaleTimeString()}
         </p>
 
         <button
           onClick={() => pingMutation.mutate()}
           disabled={pingMutation.isPending}
-          className="w-full bg-primary text-white font-bold uppercase tracking-wider py-3 disabled:opacity-50 min-h-[44px]"
+          className="btn-primary w-full"
         >
           {pingMutation.isPending ? t('Sending...', 'পাঠানো হচ্ছে...') : t("I'm Safe", 'আমি নিরাপদ')}
         </button>

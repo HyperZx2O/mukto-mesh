@@ -54,18 +54,18 @@ export default function AddPinForm({ lat, lng, onSuccess, onCancel }: Props) {
         </p>
 
         <div className="space-y-1">
-          <label className="text-sm font-bold text-text-primary uppercase tracking-wider">
+          <label className="section-label">
             {t('Label', 'লেবেল')} <span className="text-danger">*</span>
           </label>
-          <input value={label} onChange={(e) => setLabel(e.target.value)} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary" />
-          {labelError && <p className="text-xs text-danger">{labelError}</p>}
+          <input value={label} onChange={(e) => setLabel(e.target.value)} className="input-field" />
+          {labelError && <p className="text-caption text-danger">{labelError}</p>}
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-bold text-text-primary uppercase tracking-wider">
+          <label className="section-label">
             {t('Type', 'ধরন')}
           </label>
-          <select value={type} onChange={(e) => setType(e.target.value as PinType)} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary">
+          <select value={type} onChange={(e) => setType(e.target.value as PinType)} className="input-field">
             {PIN_TYPES.map((pt) => (
               <option key={pt} value={pt}>{typeLabels[pt]}</option>
             ))}

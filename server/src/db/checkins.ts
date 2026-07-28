@@ -15,6 +15,10 @@ export function pingCheckin(id: string) {
   getDB().prepare("UPDATE checkins SET last_checkin_at = ?, status = 'active' WHERE id = ?").run(Date.now(), id)
 }
 
+export function getCheckinById(id: string) {
+  return getDB().prepare('SELECT * FROM checkins WHERE id = ?').get(id)
+}
+
 export function getAllCheckins() {
   return getDB().prepare('SELECT * FROM checkins ORDER BY created_at DESC').all()
 }

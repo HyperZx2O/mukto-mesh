@@ -23,7 +23,10 @@ export default function MissingPersons() {
 
   const { data, isLoading, isError } = useQuery<ApiResponse<MissingPerson[]>>({
     queryKey: ['missing', debounced],
-    queryFn: () => api.get<MissingPerson[]>(`/missing${debounced ? `?q=${debounced}` : ''}`),
+    queryFn: () => {
+      if (!debounced) return api.get<MissingPerson[]>('/missing')
+      return api.get<MissingPerson[]>(`/missing/search?q=${encodeURIComponent(debounced)}`)
+    },
   })
 
   const results = data?.data ?? []
@@ -35,9 +38,9 @@ export default function MissingPersons() {
 
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      missing: 'bg-danger/20 text-danger',
-      found: 'bg-success/20 text-success',
-      unverified: 'bg-warning/20 text-warning',
+      missing: 'bg-danger-muted text-danger',
+      found: 'bg-success-muted text-success',
+      unverified: 'bg-warning-muted text-warning',
     }
     const labels: Record<string, string> = {
       missing: t('Missing', 'নিখোঁজ'),
@@ -76,7 +79,7 @@ export default function MissingPersons() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('Search by name or location...', 'নাম বা অবস্থান দ্বারা অনুসন্ধান...')}
-              className="w-full bg-surface border border-border text-text-primary pl-10 pr-4 py-3 text-sm outline-none focus:border-primary"
+              className="input-field pl-10"
             />
           </div>
 
@@ -127,7 +130,7 @@ export default function MissingPersons() {
                 {person.age != null && ` · ${person.age} ${t('yrs', 'বছর')}`}
               </p>
               {person.description && (
-                <p className="text-sm text-text-secondary">{person.description}</p>
+                <p className="text-sm text-text-muted">{person.description}</p>
               )}
               <div className="text-xs text-text-muted pt-1">
                 {t('Contact', 'যোগাযোগ')}: {person.contactName} · {person.contactPhone}

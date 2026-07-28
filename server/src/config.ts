@@ -16,7 +16,8 @@ if (ADMIN_PASSWORD === 'changeme') {
 export const config = Object.freeze({
   PORT: Number(process.env.PORT) || 3000,
   NODE_ENV: process.env.NODE_ENV || 'development',
-  ADMIN_PASSWORD,
+
+  ADMIN_PASSWORD: ADMIN_PASSWORD as string,
   DB_PATH: process.env.DB_PATH || './mukto_mesh.db',
   REMOTE_SYNC_URL: process.env.REMOTE_SYNC_URL || '',
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',

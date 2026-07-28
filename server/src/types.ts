@@ -4,7 +4,6 @@ export enum WsEvent {
   JOIN = 'join',
   MESSAGE = 'message',
   SWITCH_CHANNEL = 'switch_channel',
-  WS_MESSAGE = 'message',
   POST_CREATED = 'post_created',
   POST_PINNED = 'post_pinned',
   CHECKIN_FLAGGED = 'checkin_flagged',

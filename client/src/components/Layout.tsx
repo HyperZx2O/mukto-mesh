@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { MessageSquare, ClipboardList, BookOpen, Users, MapPin, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ToastProvider } from './Toast'
@@ -17,6 +17,7 @@ const navItems = [
 
 export default function Layout() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
 
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(path + '/')
@@ -30,7 +31,10 @@ export default function Layout() {
 
       {/* Top bar */}
       <header className="h-16 flex items-center justify-between px-4 border-b border-border bg-background shrink-0">
-        <h1 className="text-lg font-bold uppercase tracking-wider text-text-primary">
+        <h1
+          onClick={() => navigate('/')}
+          className="font-display font-heading text-heading text-text-heading cursor-pointer hover:text-primary transition-colors"
+        >
           Mukto Mesh
         </h1>
         <LanguageToggle />

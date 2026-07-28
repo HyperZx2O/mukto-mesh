@@ -17,15 +17,15 @@ export default class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen bg-background text-text-primary flex items-center justify-center p-6">
           <div className="max-w-md text-center space-y-4">
-            <h1 className="text-2xl font-bold uppercase tracking-wider">
+            <h1 className="font-display font-heading text-heading text-text-heading">
               Something unexpected happened
             </h1>
-            <p className="text-sm text-text-muted">
+            <p className="text-body text-text-muted">
               Please reload the page to continue. If the problem persists, reconnect to the local node.
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-primary text-white font-bold uppercase tracking-wider min-h-[44px]"
+              className="btn-primary"
             >
               Reload Page
             </button>

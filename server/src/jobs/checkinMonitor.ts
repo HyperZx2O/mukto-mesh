@@ -11,29 +11,30 @@ export function startCheckinMonitor() {
   setInterval(() => {
     try {
       const now = Date.now()
-      const active = getActiveCheckins() as any[]
+      const active = getActiveCheckins() as Record<string, unknown>[]
 
       for (const entry of active) {
-        const deadlineMs = entry.last_checkin_at + entry.interval_hours * 60 * 60 * 1000
+        const deadlineMs = Number(entry.last_checkin_at) + Number(entry.interval_hours) * 60 * 60 * 1000
         if (now > deadlineMs) {
-          flagUnresponsive(entry.id)
+          flagUnresponsive(String(entry.id))
 
-          log.warn(`Check-in flagged: ${entry.display_name} is unresponsive`)
+          const displayName = String(entry.display_name)
+          log.warn(`Check-in flagged: ${displayName} is unresponsive`)
 
           createPost({
             display_name: 'System',
             user_id: 'system',
             tag: 'safety',
-            content: `User ${entry.display_name} has not checked in and is unresponsive. Last check-in: ${new Date(entry.last_checkin_at).toLocaleString()}.`,
+            content: `User ${displayName} has not checked in and is unresponsive. Last check-in: ${new Date(Number(entry.last_checkin_at)).toLocaleString()}.`,
           })
 
           broadcastToAll({
             type: WsEvent.CHECKIN_FLAGGED,
-            displayName: entry.display_name,
+            displayName,
           })
 
-          sendSms(entry.contact_phone,
-            `Alert: ${entry.display_name} has not checked in and is unresponsive. Last check-in: ${new Date(entry.last_checkin_at).toLocaleString()}.`)
+          sendSms(String(entry.contact_phone),
+            `Alert: ${displayName} has not checked in and is unresponsive. Last check-in: ${new Date(Number(entry.last_checkin_at)).toLocaleString()}.`)
         }
       }
     } catch (e) {

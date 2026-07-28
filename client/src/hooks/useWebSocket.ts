@@ -13,7 +13,9 @@ export function useWebSocket(onMessage: (data: any) => void) {
     ws.current.onmessage = (e) => {
       try {
         onMessage(JSON.parse(e.data))
-      } catch {}
+      } catch (err) {
+        console.warn('[WS] Failed to parse message:', err)
+      }
     }
 
     ws.current.onclose = () => {

@@ -36,20 +36,20 @@ function DisplayNameForm() {
         onSubmit={submit}
         className="bg-surface p-6 w-full max-w-sm mx-4 border border-border"
       >
-        <h2 id="display-name-title" className="text-lg font-bold text-text-primary mb-4">
+        <h2 id="display-name-title" className="font-display font-heading text-heading text-text-heading mb-4">
           {t('Enter your display name', 'আপনার নাম লিখুন')}
         </h2>
         <input
           autoFocus
           value={name}
           onChange={(e) => { setName(e.target.value); setError('') }}
-          className="w-full bg-background text-text-primary border border-border p-3 mb-1 outline-none focus:border-primary"
+          className="input-field mb-1"
           placeholder={t('Your name', 'আপনার নাম')}
         />
-        {error && <p className="text-xs text-danger mb-3">{error}</p>}
+        {error && <p className="text-caption text-danger mb-3">{error}</p>}
         <button
           type="submit"
-          className="w-full bg-primary text-white font-bold uppercase tracking-wider py-3 min-h-[44px]"
+          className="btn-primary w-full"
         >
           {t('Save', 'সংরক্ষণ')}
         </button>

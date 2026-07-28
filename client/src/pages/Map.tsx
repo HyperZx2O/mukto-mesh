@@ -23,13 +23,13 @@ function darkStyle(sourceUrl: string): maplibregl.StyleSpecification {
     },
     glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
     layers: [
-      { id: 'bg', type: 'background', paint: { 'background-color': '#0a0a0a' } },
-      { id: 'land', type: 'fill', source: 'bangladesh', 'source-layer': 'land', paint: { 'fill-color': '#141414' } },
-      { id: 'water', type: 'fill', source: 'bangladesh', 'source-layer': 'water', paint: { 'fill-color': '#0d1b2a' } },
-      { id: 'water_oo', type: 'line', source: 'bangladesh', 'source-layer': 'water', paint: { 'line-color': '#1a2d4a', 'line-width': 0.5 } },
-      { id: 'roads', type: 'line', source: 'bangladesh', 'source-layer': 'roads', paint: { 'line-color': '#2a2a2a', 'line-width': 1 }, filter: ['==', ['geometry-type'], 'LineString'] },
-      { id: 'buildings', type: 'fill', source: 'bangladesh', 'source-layer': 'buildings', paint: { 'fill-color': '#1a1a1a', 'fill-opacity': 0.6 } },
-      { id: 'places', type: 'symbol', source: 'bangladesh', 'source-layer': 'places', layout: { 'text-field': '{name}', 'text-size': 10, 'text-transform': 'uppercase' }, paint: { 'text-color': '#737373', 'text-halo-color': '#0a0a0a', 'text-halo-width': 1 } },
+      { id: 'bg', type: 'background', paint: { 'background-color': 'var(--color-paper, #0a0a0a)' } },
+      { id: 'land', type: 'fill', source: 'bangladesh', 'source-layer': 'land', paint: { 'fill-color': 'var(--color-paper-alt, #141414)' } },
+      { id: 'water', type: 'fill', source: 'bangladesh', 'source-layer': 'water', paint: { 'fill-color': 'var(--color-surface, #1f1f1f)' } },
+      { id: 'water_oo', type: 'line', source: 'bangladesh', 'source-layer': 'water', paint: { 'line-color': 'var(--color-border, #2e2e2e)', 'line-width': 0.5 } },
+      { id: 'roads', type: 'line', source: 'bangladesh', 'source-layer': 'roads', paint: { 'line-color': 'var(--color-elevated, #262626)', 'line-width': 1 }, filter: ['==', ['geometry-type'], 'LineString'] },
+      { id: 'buildings', type: 'fill', source: 'bangladesh', 'source-layer': 'buildings', paint: { 'fill-color': 'var(--color-surface-hover, #242424)', 'fill-opacity': 0.6 } },
+      { id: 'places', type: 'symbol', source: 'bangladesh', 'source-layer': 'places', layout: { 'text-field': '{name}', 'text-size': 10, 'text-transform': 'uppercase' }, paint: { 'text-color': 'var(--color-text-muted, #737373)', 'text-halo-color': 'var(--color-paper, #0a0a0a)', 'text-halo-width': 1 } },
     ],
   }
 }

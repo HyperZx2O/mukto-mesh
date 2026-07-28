@@ -71,6 +71,16 @@ export interface MapPin {
   createdAt: number
 }
 
+export interface NodeStatus {
+  connectedUsers: number
+  checkins: {
+    total: number
+    active: number
+    unresponsive: number
+  }
+  uptime: number
+}
+
 export interface ApiResponse<T> {
   data: T | null
   error: string | null

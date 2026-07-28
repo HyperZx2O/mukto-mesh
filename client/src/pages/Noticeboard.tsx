@@ -21,8 +21,8 @@ export default function Noticeboard() {
   })
 
   const pinMutation = useMutation({
-    mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>
-      api.patch(`/posts/${id}`, { pinned }),
+    mutationFn: ({ id }: { id: string }) =>
+      api.patch(`/posts/${id}/pin`, {}),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
   })
 
@@ -39,7 +39,7 @@ export default function Noticeboard() {
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-text-primary uppercase tracking-wider">
+        <h1 className="font-display font-heading text-heading text-text-heading">
           {t('Noticeboard', 'নোটিশ বোর্ড')}
         </h1>
         {isOffline && <span className="text-xs text-text-muted">{t('Cached', 'ক্যাশে')}</span>}
@@ -61,8 +61,8 @@ export default function Noticeboard() {
 
       {/* Error */}
       {isError && (
-        <div className="border border-danger/30 bg-danger/10 p-4">
-          <p className="text-sm text-danger">
+        <div className="error-state">
+          <p className="text-body text-danger">
             {t('Could not load posts.', 'পোস্ট লোড করা যায়নি।')}
           </p>
         </div>
@@ -70,8 +70,8 @@ export default function Noticeboard() {
 
       {/* Empty */}
       {!isLoading && !isError && posts.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-text-muted">
+        <div className="empty-state">
+          <p className="text-body text-text-muted">
             {t('No posts yet. Create one!', 'এখনো কোনো পোস্ট নেই। একটি তৈরি করুন!')}
           </p>
         </div>
@@ -85,7 +85,7 @@ export default function Noticeboard() {
               key={post.id}
               post={post}
               isAdmin={isAdmin}
-              onPin={(id, pinned) => pinMutation.mutate({ id, pinned })}
+              onPin={(id) => pinMutation.mutate({ id })}
               onDelete={(id) => deleteMutation.mutate(id)}
             />
           ))}

@@ -1,7 +1,7 @@
 import { config } from '../config.js'
 import { log } from '../logger.js'
 
-let twilioClient: any
+let twilioClient: { messages: { create: (opts: { from: string; to: string; body: string }) => Promise<unknown> } } | null = null
 let twilioConfigured: boolean | null = null
 
 async function initTwilio() {
@@ -13,7 +13,7 @@ async function initTwilio() {
   }
   try {
     const twilioMod = await import('twilio')
-    twilioClient = twilioMod.default(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN)
+    twilioClient = twilioMod.default(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN) as typeof twilioClient
     twilioConfigured = true
   } catch (e) {
     log.warn(`Failed to init Twilio client — SMS will be mocked: ${e}`)

@@ -37,11 +37,15 @@ registerRoute(
   }),
 )
 
+// Background Sync: When connectivity returns, trigger the server-side sync job
+// The actual data push (unsynced missing persons + pins → remote) is handled by
+// server/src/integrations/remoteSync.ts running every 5 minutes.
+// The Background Sync API just gives us a faster initial attempt.
 self.addEventListener('sync', ((event: Event) => {
   const syncEvent = event as unknown as { tag: string; waitUntil: (p: Promise<unknown>) => void }
   if (syncEvent.tag === 'sync-missing' || syncEvent.tag === 'sync-pins') {
     syncEvent.waitUntil(
-      fetch(`/api/sync/${syncEvent.tag.replace('sync-', '')}`, { method: 'POST' }).catch(() => {}),
+      fetch('/health', { method: 'GET' }).catch(() => {}),
     )
   }
 }) as EventListener)

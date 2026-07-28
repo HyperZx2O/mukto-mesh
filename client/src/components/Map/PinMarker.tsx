@@ -1,13 +1,5 @@
 import type { MapPin, PinType } from '@/types'
 
-const PIN_COLORS: Record<PinType, string> = {
-  shelter: '#006A4E',
-  danger: '#C8102E',
-  missing: '#f4b400',
-  medical: '#1c69d4',
-  general: '#737373',
-}
-
 const PIN_LABELS: Record<PinType, string> = {
   shelter: 'S',
   danger: '!',
@@ -16,11 +8,20 @@ const PIN_LABELS: Record<PinType, string> = {
   general: '·',
 }
 
+const PIN_CLASSES: Record<PinType, string> = {
+  shelter: 'bg-[var(--color-pin-shelter)]',
+  danger: 'bg-[var(--color-pin-danger)]',
+  missing: 'bg-[var(--color-pin-missing)]',
+  medical: 'bg-[var(--color-pin-medical)]',
+  general: 'bg-[var(--color-pin-general)]',
+}
+
 export function createPinElement(pin: MapPin): HTMLElement {
-  const color = PIN_COLORS[pin.type]
   const label = PIN_LABELS[pin.type]
+  const bgClass = PIN_CLASSES[pin.type]
   const el = document.createElement('div')
-  el.style.cssText = `width:36px;height:36px;border-radius:50%;background:${color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;cursor:pointer;border:2px solid rgba(255,255,255,0.6);box-shadow:0 2px 8px rgba(0,0,0,0.5);transition:transform .15s`
+  el.className = `${bgClass} inline-flex items-center justify-center cursor-pointer`
+  el.style.cssText += `width:36px;height:36px;border-radius:var(--radius-pill, 9999px);color:var(--color-text-heading, #fff);font-size:14px;font-weight:700;border:2px solid color-mix(in oklch, var(--color-text, #f5f5f5) 60%, transparent);box-shadow:var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.4));transition:transform var(--dur-fast) var(--ease-out)`
   el.textContent = label
   el.addEventListener('mouseenter', () => { el.style.transform = 'scale(1.2)' })
   el.addEventListener('mouseleave', () => { el.style.transform = 'scale(1)' })

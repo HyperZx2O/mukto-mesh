@@ -23,6 +23,6 @@ export function getLastMessages(channel: string, limit = 50) {
   const db = getDB()
   const rows = db.prepare(
     'SELECT * FROM messages WHERE channel = ? ORDER BY created_at DESC LIMIT ?'
-  ).all(channel, limit)
-  return (rows as any[]).reverse()
+  ).all(channel, limit) as Record<string, unknown>[]
+  return rows.reverse()
 }

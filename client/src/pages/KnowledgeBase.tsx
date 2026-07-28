@@ -50,7 +50,7 @@ export default function KnowledgeBase() {
 
   return (
     <div className="p-4 space-y-4">
-      <h1 className="text-2xl font-bold text-text-primary uppercase tracking-wider">
+      <h1 className="font-display font-heading text-heading text-text-heading">
         {t('Knowledge Base', 'জ্ঞানভাণ্ডার')}
       </h1>
 
@@ -61,7 +61,7 @@ export default function KnowledgeBase() {
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full bg-surface border border-border text-text-primary pl-10 pr-4 py-3 text-sm outline-none focus:border-primary"
+          className="input-field pl-10"
           placeholder={t('Search sections...', 'সেকশন অনুসন্ধান...')}
         />
       </div>
@@ -86,9 +86,11 @@ export default function KnowledgeBase() {
 
       {/* Active section content */}
       {filtered.length === 0 ? (
-        <p className="text-text-muted py-8 text-center">
-          {t('No matching sections found.', 'কোনো মিল পাওয়া যায়নি।')}
-        </p>
+        <div className="empty-state">
+          <p className="text-body text-text-muted">
+            {t('No matching sections found.', 'কোনো মিল পাওয়া যায়নি।')}
+          </p>
+        </div>
       ) : active && content[active] ? (
         // ponytail: trusted build-time content, safe for innerHTML
         <div

@@ -44,12 +44,12 @@ export function markMissingSynced(ids: string[]) {
   db.prepare(`UPDATE missing_persons SET synced = 1 WHERE id IN (${ids.map(() => '?').join(',')})`).run(...ids)
 }
 
-export function upsertMissingBatch(entries: any[]) {
+export function upsertMissingBatch(entries: Record<string, unknown>[]) {
   const db = getDB()
   const insert = db.prepare(
     'INSERT OR IGNORE INTO missing_persons (id, name, age, gender, last_location, description, contact_name, contact_phone, photo_url, status, synced, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)'
   )
-  const insertMany = db.transaction((items: any[]) => {
+  const insertMany = db.transaction((items: Record<string, unknown>[]) => {
     for (const e of items) insert.run(e.id, e.name, e.age, e.gender, e.last_location, e.description, e.contact_name, e.contact_phone, e.photo_url, e.status, e.created_at)
   })
   insertMany(entries)

@@ -35,7 +35,7 @@ function connect() {
     useWs.setState({ connectionStatus: 'connected' })
     retries = 0
     const { displayName } = useAuthStore.getState()
-    ws?.send(JSON.stringify({ type: 'join', payload: { displayName } }))
+    ws?.send(JSON.stringify({ type: 'join', displayName }))
   }
 
   ws.onmessage = (e) => {
@@ -43,14 +43,14 @@ function connect() {
       const msg = JSON.parse(e.data)
       switch (msg.type) {
         case 'message':
-          useChatStore.getState().addMessage(msg.payload)
+          useChatStore.getState().addMessage(msg)
           break
         case 'post_created':
         case 'post_pinned':
           qc?.invalidateQueries({ queryKey: ['posts'] })
           break
         case 'broadcast':
-          useWs.setState({ broadcast: msg.payload?.message || msg.payload?.content || '' })
+          useWs.setState({ broadcast: msg.message || '' })
           break
       }
     } catch { /* skip malformed */ }
@@ -83,6 +83,6 @@ export function closeWs() {
 
 export function sendMessage(channel: string, content: string) {
   if (ws?.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: 'message', payload: { channel, content } }))
+    ws.send(JSON.stringify({ type: 'message', channel, content }))
   }
 }

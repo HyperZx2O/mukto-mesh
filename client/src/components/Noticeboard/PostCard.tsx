@@ -5,11 +5,11 @@ import type { Post, PostTag } from '@/types'
 
 function tagBadgeClass(tag: PostTag): string {
   switch (tag) {
-    case 'safety': return 'bg-red-600 text-white'
-    case 'medical': return 'bg-amber-600 text-white'
-    case 'food': return 'bg-green-600 text-white'
-    case 'legal': return 'bg-blue-600 text-white'
-    case 'news': return 'bg-purple-600 text-white'
+    case 'safety': return 'bg-tag-safety text-white'
+    case 'medical': return 'bg-tag-medical text-white'
+    case 'food': return 'bg-tag-food text-white'
+    case 'legal': return 'bg-tag-legal text-white'
+    case 'news': return 'bg-tag-news text-white'
     default: return 'bg-surface text-text-muted'
   }
 }
@@ -26,7 +26,7 @@ const TAG_LABELS: Record<PostTag, { en: string; bn: string }> = {
 interface Props {
   post: Post
   isAdmin: boolean
-  onPin: (id: string, pinned: boolean) => void
+  onPin: (id: string) => void
   onDelete: (id: string) => void
 }
 
@@ -47,7 +47,7 @@ export default function PostCard({ post, isAdmin, onPin, onDelete }: Props) {
         {isAdmin && (
           <div className="flex gap-1 shrink-0">
             <button
-              onClick={() => onPin(post.id, !post.pinned)}
+              onClick={() => onPin(post.id)}
               className="p-2 text-text-muted hover:text-text-primary min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label={post.pinned ? t('Unpin', 'আনপিন') : t('Pin', 'পিন')}
             >

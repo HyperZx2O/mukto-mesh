@@ -35,17 +35,17 @@ export default function MissingPersonForm({ onSuccess }: Props) {
         fd.append('name', name)
         if (age) fd.append('age', age)
         if (gender) fd.append('gender', gender)
-        fd.append('lastLocation', lastLocation)
+        fd.append('last_location', lastLocation)
         if (description) fd.append('description', description)
-        fd.append('contactName', contactName)
-        fd.append('contactPhone', contactPhone)
+        fd.append('contact_name', contactName)
+        fd.append('contact_phone', contactPhone)
         fd.append('photo', photo)
         return api.post<MissingPerson>('/missing', fd)
       }
       return api.post<MissingPerson>('/missing', {
         name, age: age || null, gender: gender || null,
-        lastLocation, description: description || null,
-        contactName, contactPhone,
+        last_location: lastLocation, description: description || null,
+        contact_name: contactName, contact_phone: contactPhone,
       })
     },
     onSuccess: () => {
@@ -100,11 +100,11 @@ export default function MissingPersonForm({ onSuccess }: Props) {
     label: string; labelBn: string; children: React.ReactNode; error?: string; required?: boolean
   }) => (
     <div className="space-y-1">
-      <label className="text-sm font-bold text-text-primary uppercase tracking-wider">
+      <label className="section-label">
         {lang === 'bn' ? labelBn : label}{required && <span className="text-danger ml-1">*</span>}
       </label>
       {children}
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {error && <p className="text-caption text-danger">{error}</p>}
     </div>
   )
 
@@ -119,15 +119,15 @@ export default function MissingPersonForm({ onSuccess }: Props) {
       )}
 
       <Field label="Name" labelBn="নাম" error={errors.name} required>
-        <input value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary" />
+        <input value={name} onChange={(e) => setName(e.target.value)} className="input-field" />
       </Field>
 
       <div className="grid grid-cols-2 gap-4">
         <Field label="Age" labelBn="বয়স">
-          <input type="number" value={age} onChange={(e) => setAge(e.target.value)} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary" />
+          <input type="number" value={age} onChange={(e) => setAge(e.target.value)} className="input-field" />
         </Field>
         <Field label="Gender" labelBn="লিঙ্গ">
-          <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary">
+          <select value={gender} onChange={(e) => setGender(e.target.value)} className="input-field">
             <option value="">—</option>
             <option value="male">{t('Male', 'পুরুষ')}</option>
             <option value="female">{t('Female', 'নারী')}</option>
@@ -137,19 +137,19 @@ export default function MissingPersonForm({ onSuccess }: Props) {
       </div>
 
       <Field label="Last Known Location" labelBn="শেষ অবস্থান" error={errors.lastLocation} required>
-        <input value={lastLocation} onChange={(e) => setLastLocation(e.target.value)} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary" />
+        <input value={lastLocation} onChange={(e) => setLastLocation(e.target.value)} className="input-field" />
       </Field>
 
       <Field label="Description" labelBn="বর্ণনা">
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary resize-none" />
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="input-field resize-none" />
       </Field>
 
       <div className="grid grid-cols-2 gap-4">
         <Field label="Contact Name" labelBn="যোগাযোগের নাম" error={errors.contactName} required>
-          <input value={contactName} onChange={(e) => setContactName(e.target.value)} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary" />
+          <input value={contactName} onChange={(e) => setContactName(e.target.value)} className="input-field" />
         </Field>
         <Field label="Contact Phone" labelBn="যোগাযোগের ফোন" error={errors.contactPhone} required>
-          <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+8801XXXXXXXXX" className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary" />
+          <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+8801XXXXXXXXX" className="input-field" />
         </Field>
       </div>
 
@@ -163,7 +163,7 @@ export default function MissingPersonForm({ onSuccess }: Props) {
       <button
         type="submit"
         disabled={mutation.isPending}
-        className="w-full bg-primary text-white font-bold uppercase tracking-wider py-3 disabled:opacity-50 min-h-[44px]"
+        className="btn-primary w-full"
       >
         {mutation.isPending ? t('Submitting...', 'জমা দেওয়া হচ্ছে...') : t('Submit Report', 'রিপোর্ট জমা দিন')}
       </button>

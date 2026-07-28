@@ -36,8 +36,8 @@ posts.post('/', async (c) => {
 })
 
 posts.patch('/:id/pin', adminAuth, (c) => {
-  const id = c.req.param('id')
-  const post = getPostById(id) as any
+  const id = c.req.param('id')!
+  const post = getPostById(id) as Record<string, unknown> | undefined
 
   if (!post) return c.json({ data: null, error: 'Post not found' }, 404)
 
@@ -48,7 +48,7 @@ posts.patch('/:id/pin', adminAuth, (c) => {
 })
 
 posts.delete('/:id', adminAuth, (c) => {
-  const id = c.req.param('id')
+  const id = c.req.param('id')!
   deletePost(id)
   return c.json({ data: { deleted: true }, error: null })
 })

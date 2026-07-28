@@ -23,7 +23,7 @@ export default function ChannelTab({ channel, active, unread, onClick }: Props) 
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase tracking-wider border min-h-[44px] shrink-0 ${
+      className={`relative flex items-center gap-2 px-4 py-2 text-caption font-bold uppercase tracking-wider border shrink-0 ${
         active
           ? 'bg-primary text-white border-primary'
           : 'bg-surface text-text-muted border-border hover:text-text-primary'
@@ -31,7 +31,7 @@ export default function ChannelTab({ channel, active, unread, onClick }: Props) 
     >
       {lang === 'bn' ? label.bn : label.en}
       {unread > 0 && (
-        <span className="bg-danger text-white text-xs font-bold px-1.5 py-0.5 min-w-[20px] text-center">
+        <span className="bg-danger text-white text-caption font-bold px-1.5 py-0.5 min-w-[20px] text-center">
           {unread > 99 ? '99+' : unread}
         </span>
       )}

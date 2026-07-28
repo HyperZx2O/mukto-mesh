@@ -1,10 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { lazy, Suspense, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useWs, initWs, closeWs, setQueryClient } from '@/lib/ws'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
 
+const Dashboard = lazy(() => import('@/pages/Dashboard'))
 const Chat = lazy(() => import('@/pages/Chat'))
 const Noticeboard = lazy(() => import('@/pages/Noticeboard'))
 const KnowledgeBase = lazy(() => import('@/pages/KnowledgeBase'))
@@ -31,7 +32,7 @@ export default function App() {
       <Suspense fallback={<div className="p-4 animate-pulse space-y-3"><div className="h-6 bg-border w-48" /><div className="h-4 bg-border w-64" /><div className="h-4 bg-border w-32" /></div>}>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/chat" replace />} />
+          <Route path="/" element={<Dashboard />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/board" element={<Noticeboard />} />
           <Route path="/info/*" element={<KnowledgeBase />} />

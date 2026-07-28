@@ -23,7 +23,7 @@ export default function CheckInForm({ onRegistered }: Props) {
 
   const mutation = useMutation({
     mutationFn: () => api.post<{ id: string }>('/checkin/register', {
-      displayName: name, contactPhone: phone, intervalHours: interval,
+      display_name: name, contact_phone: phone, interval_hours: interval,
     }),
     onSuccess: (res) => {
       if (res.data?.id) onRegistered(res.data.id)
@@ -45,23 +45,23 @@ export default function CheckInForm({ onRegistered }: Props) {
   return (
     <form onSubmit={submit} className="space-y-4 max-w-md">
       <div className="space-y-1">
-        <label className="text-sm font-bold text-text-primary uppercase tracking-wider">
+        <label className="section-label">
           {t('Display Name', 'প্রদর্শনের নাম')}
         </label>
-        <input value={name} onChange={(e) => { setName(e.target.value); setNameError('') }} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary" />
-        {nameError && <p className="text-xs text-danger">{nameError}</p>}
+        <input value={name} onChange={(e) => { setName(e.target.value); setNameError('') }} className="input-field" />
+        {nameError && <p className="text-caption text-danger">{nameError}</p>}
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm font-bold text-text-primary uppercase tracking-wider">
+        <label className="section-label">
           {t('Contact Phone', 'যোগাযোগের ফোন')} <span className="text-danger">*</span>
         </label>
-        <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+8801XXXXXXXXX" className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary" />
-        {phoneError && <p className="text-xs text-danger">{phoneError}</p>}
+        <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+8801XXXXXXXXX" className="input-field" />
+        {phoneError && <p className="text-caption text-danger">{phoneError}</p>}
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm font-bold text-text-primary uppercase tracking-wider">
+        <label className="section-label">
           {t('Check-in Interval', 'চেক-ইন ব্যবধান')}
         </label>
         <div className="flex gap-2 flex-wrap">
@@ -85,13 +85,13 @@ export default function CheckInForm({ onRegistered }: Props) {
       <button
         type="submit"
         disabled={mutation.isPending}
-        className="w-full bg-primary text-white font-bold uppercase tracking-wider py-3 disabled:opacity-50 min-h-[44px]"
+        className="btn-primary w-full"
       >
         {mutation.isPending ? t('Registering...', 'নিবন্ধন করা হচ্ছে...') : t('Register', 'নিবন্ধন')}
       </button>
 
       {mutation.isError && (
-        <p className="text-sm text-danger">
+        <p className="text-body text-danger">
           {t('Registration failed. Try again.', 'নিবন্ধন ব্যর্থ। আবার চেষ্টা করুন।')}
         </p>
       )}

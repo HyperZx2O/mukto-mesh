@@ -32,7 +32,7 @@ pins.post('/', async (c) => {
 })
 
 pins.delete('/:id', adminAuth, (c) => {
-  const id = c.req.param('id')
+  const id = c.req.param('id')!
   deletePin(id)
   return c.json({ data: { deleted: true }, error: null })
 })
