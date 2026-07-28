@@ -20,7 +20,7 @@ import messages from './routes/messages.js'
 
 // Jobs
 import { startCheckinMonitor } from './jobs/checkinMonitor.js'
-import { fetchNews } from './jobs/newsFetcher.js'
+import { startNewsFetcher } from './jobs/newsFetcher.js'
 
 const app = new Hono()
 
@@ -43,7 +43,7 @@ app.route('/api/messages', messages)
 
 // Start background jobs
 startCheckinMonitor()
-fetchNews()
+startNewsFetcher()
 
 // Health check
 app.get('/health', (c) =>
