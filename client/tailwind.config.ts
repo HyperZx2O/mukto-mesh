@@ -5,17 +5,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0a0a0a',
-        surface: '#141414',
-        border: '#262626',
-        primary: '#006A4E',   // Bangladesh green
-        danger: '#C8102E',    // Bangladesh red
-        'text-primary': '#f5f5f5',
-        'text-muted': '#737373',
+        background: 'var(--color-bg)',
+        surface: 'var(--color-surface)',
+        border: 'var(--color-border)',
+        primary: 'var(--color-primary)',
+        danger: 'var(--color-danger)',
+        'text-primary': 'var(--color-text)',
+        'text-muted': 'var(--color-muted)',
       },
       fontFamily: {
-        sans: ['system-ui', '-apple-system', 'sans-serif'],
-      }
+        sans: ['Noto Sans Bengali', 'Hind Siliguri', 'system-ui', '-apple-system', 'sans-serif'],
+      },
     },
   },
   plugins: [],

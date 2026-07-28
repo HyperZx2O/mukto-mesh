@@ -1,25 +1,16 @@
 import { create } from 'zustand'
-
-export type Channel = 'general' | 'emergency' | 'coordination' | 'medical'
-
-export interface Message {
-  id: string
-  displayName: string
-  channel: Channel
-  content: string
-  createdAt: number
-}
+import type { Channel, ChatMessage } from '@/types'
 
 interface ChatState {
-  messages: Message[]
+  messages: ChatMessage[]
   activeChannel: Channel
   unread: Record<Channel, number>
-  addMessage: (msg: Message) => void
+  addMessage: (msg: ChatMessage) => void
   setChannel: (channel: Channel) => void
   clearUnread: (channel: Channel) => void
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
+export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   activeChannel: 'general',
   unread: { general: 0, emergency: 0, coordination: 0, medical: 0 },

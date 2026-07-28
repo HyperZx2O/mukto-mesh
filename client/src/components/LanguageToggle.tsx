@@ -1,0 +1,27 @@
+import { useLanguageStore } from '@/store/useLanguageStore'
+
+export default function LanguageToggle() {
+  const lang = useLanguageStore((s) => s.lang)
+  const setLang = useLanguageStore((s) => s.setLang)
+
+  return (
+    <div className="flex gap-1">
+      <button
+        onClick={() => setLang('en')}
+        className={`px-3 py-1 text-sm font-bold uppercase tracking-wider ${
+          lang === 'en' ? 'bg-primary text-white' : 'text-text-muted hover:text-text-primary'
+        }`}
+      >
+        EN
+      </button>
+      <button
+        onClick={() => setLang('bn')}
+        className={`px-3 py-1 text-sm font-bold uppercase tracking-wider ${
+          lang === 'bn' ? 'bg-primary text-white' : 'text-text-muted hover:text-text-primary'
+        }`}
+      >
+        বাং
+      </button>
+    </div>
+  )
+}

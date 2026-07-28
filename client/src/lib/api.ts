@@ -1,11 +1,15 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+import { API_URL } from './config'
+import { useAuthStore } from '@/store/useAuthStore'
+import type { ApiResponse } from '@/types'
 
-async function request<T>(path: string, options?: RequestInit): Promise<{ data: T | null; error: string | null }> {
+async function request<T>(path: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      headers: { 'Content-Type': 'application/json' },
-      ...options,
-    })
+    const headers: Record<string, string> = {}
+    const token = useAuthStore.getState().adminToken
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    if (!(options?.body instanceof FormData)) headers['Content-Type'] = 'application/json'
+
+    const res = await fetch(`${API_URL}${path}`, { headers, ...options })
     return await res.json()
   } catch {
     return { data: null, error: 'Network error — you may be offline' }
@@ -14,8 +18,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<{ data: 
 
 export const api = {
   get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body: object) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+  post: <T>(path: string, body: object | FormData) =>
+    request<T>(path, {
+      method: 'POST',
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
   patch: <T>(path: string, body: object) =>
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: <T>(path: string) =>

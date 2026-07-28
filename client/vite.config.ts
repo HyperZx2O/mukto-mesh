@@ -8,7 +8,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', '*.pmtiles'],
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       manifest: {
         name: 'Mukto Mesh',
         short_name: 'MuktoMesh',
@@ -19,21 +21,6 @@ export default defineConfig({
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }
-        ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /\/api\/news/,
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'news-cache' }
-          },
-          {
-            urlPattern: /\/api\/posts/,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'posts-cache' }
-          }
         ]
       }
     })
