@@ -1,6 +1,7 @@
-# Implementation Plan — Mukto Mesh (Frontend)
+# Implementation Plan — Mukto Mesh Backend
 
-> **For the coding agent:** Read this entire file before writing a single line of code. Re-read the relevant phase section before starting each phase. The backend is being built in parallel — you consume its API and WebSocket; you do not own them. Treat all API contracts in this document as the agreed interface. Do not deviate without confirming with the backend member.
+> **How to use this file**
+> Read this file completely before writing a single line of code. Re-read the current phase before starting it. Every acceptance criterion must pass before moving to the next phase. Do not skip ahead. Do not implement anything from a future phase early.
 
 ---
 
@@ -8,78 +9,72 @@
 
 | Field | Value |
 |---|---|
-| Project Name | Mukto Mesh — Frontend |
-| Project Type | Frontend App (PWA) |
+| Project Name | Mukto Mesh — Backend |
+| Project Type | Backend Service |
 | Primary Language | TypeScript |
-| Framework | React 19 + Vite |
-| Target Platform | Web (mobile-first, any modern phone browser over LAN) |
-| Deployment Target | Vercel (online) · Served as static files from the local Hono server (offline node) |
-| Team / Owner | Frontend Member |
+| Framework | Hono.js |
+| Runtime | Node.js 22 LTS |
+| Target Platform | Server (local laptop LAN node + Railway cloud) |
+| Package Manager | npm |
 | Status | In Progress |
 
 ---
 
 ## Global Rules
 
-These rules apply to every phase. Non-negotiable.
-
-1. **Never implement a future phase early.** If Phase 3 needs a component, wait until Phase 3.
-2. **Never invent API shapes or WebSocket event names** not defined in this plan or the shared spec. Consume only what the backend exposes.
-3. **Every component must have a loading state, an error state, and an empty state** before any data-fetching logic is wired in.
-4. **Offline is the default assumption.** Every feature must degrade gracefully when the API is unreachable. Never show a blank screen — show a cached or empty state with an offline badge.
-5. **No business logic in components.** Components render and dispatch. Logic lives in hooks and stores.
-6. **TypeScript strict mode. No `any`.** Use `unknown` and narrow properly. Shared types live in `src/types/`.
-7. **Dark theme only.** Use only the colour tokens defined in Phase 1. No hardcoded hex values in components.
-8. **System font stack only.** No web font imports — ever. This is a network-resilience constraint.
-9. **All acceptance criteria must pass before moving to the next phase.** Do not skip ahead.
-10. **Never present a stub component as a completed feature.** Mark placeholder UI with a `// [STUB]` comment.
+1. **Never implement a future phase early.** If Phase 3 needs a feature, wait until Phase 3.
+2. **Never invent APIs or contracts** not defined in this plan. All WebSocket event names and REST shapes are fixed — the frontend depends on them.
+3. **Keep every change scoped to the current phase.** One phase, one concern.
+4. **Never introduce a new dependency without justification.** State why it's needed.
+5. **Prefer the simplest correct implementation.** This is a 72-hour sprint.
+6. **All DB access goes through `src/db/` only.** No raw SQL in routes or jobs.
+7. **All API responses use the `{ data, error }` envelope.** No exceptions.
+8. **All WebSocket event names must match the shared `WsEvent` enum exactly.** The frontend is coded against these names.
+9. **Never expose DB internals in error responses.** Log internally, return a generic 500 message.
+10. **All acceptance criteria must pass before moving to the next phase.**
 
 ---
 
 ## Architecture Decision Records
 
-### ADR-1: React 19 + Vite
+### ADR-1: Hono.js as the server framework
 - **Date:** 2026-07-27
 - **Status:** Accepted
-- **Context:** Need fast HMR, excellent PWA plugin support, and a stable component model.
-- **Decision:** React 19 with Vite. vite-plugin-pwa handles service worker and manifest automatically.
-- **Alternatives considered:** Next.js (overkill for a LAN app; SSR adds complexity with no benefit offline), SvelteKit (team familiarity risk).
-- **Consequences:** No SSR. All routing is client-side via React Router. Fine for this use case.
+- **Context:** Need a TypeScript-first, lightweight server that handles both HTTP and WebSocket in a single process, with minimal setup overhead for a 72h sprint.
+- **Decision:** Hono.js on Node.js 22 LTS.
+- **Alternatives considered:** Express (no native WS, heavier), Fastify (more config), Bun (runtime instability risk).
+- **Consequences:** WebSocket handling is built-in; the entire backend is one process serving REST, WS, static files, and PMTiles.
 
-### ADR-2: Zustand for global state
+### ADR-2: SQLite via better-sqlite3
 - **Date:** 2026-07-27
 - **Status:** Accepted
-- **Context:** Need lightweight global state for chat messages (WebSocket), user identity, language toggle, and admin status. Redux is overkill.
-- **Decision:** Zustand. One store per domain concern.
-- **Consequences:** Simple, minimal boilerplate. No Provider wrapping required.
+- **Context:** The node must run on a laptop with zero external dependencies. No Postgres, no Redis.
+- **Decision:** Single SQLite file `mukto_mesh.db` via `better-sqlite3` (synchronous API).
+- **Alternatives considered:** Postgres (requires external process), LowDB (no SQL), in-memory only (no persistence).
+- **Consequences:** Synchronous DB calls are fine for the concurrency range (5–100 users). No connection pooling needed.
 
-### ADR-3: TanStack Query for server state
+### ADR-3: Message persistence in SQLite (TBD-01 resolved)
 - **Date:** 2026-07-27
 - **Status:** Accepted
-- **Context:** Need stale-while-revalidate, offline awareness, and background refetching without hand-rolling it.
-- **Decision:** TanStack Query (React Query v5). All REST API calls go through it.
-- **Consequences:** No manual loading/error state management for API calls. Cache is automatic.
+- **Context:** Spec leaves message persistence as TBD. In-memory only means messages are lost on restart.
+- **Decision:** Persist messages to SQLite. It's one extra table and the insert is trivial.
+- **Alternatives considered:** In-memory only (simpler but poor UX during a crisis where a node restart wipes context).
+- **Consequences:** Chat history survives server restarts. `GET /messages?channel=` endpoint needed.
 
-### ADR-4: Native WebSocket API for chat
+### ADR-4: PMTiles served as a static file
 - **Date:** 2026-07-27
 - **Status:** Accepted
-- **Context:** Chat and live noticeboard updates need WebSocket. No library needed for this scale.
-- **Decision:** Native browser WebSocket wrapped in a custom `useWebSocket` hook. Reconnection with exponential backoff built into the hook.
-- **Consequences:** Zero extra dependency. Hook encapsulates all connection lifecycle.
+- **Context:** TBD-02 — how to distribute the Bangladesh `.pmtiles` file.
+- **Decision:** Commit `bangladesh.pmtiles` to `client/public/` and serve it as a Hono static asset. The frontend reads it directly via the PMTiles JS client. No server-side tile extraction logic needed.
+- **Alternatives considered:** Download script on first run (requires internet at setup), Git LFS (extra tooling).
+- **Consequences:** Repo is large (~200–400MB). Git LFS should be configured for the `.pmtiles` file.
 
-### ADR-5: vite-plugin-pwa + Workbox for offline
+### ADR-5: JWT for admin auth, display name for regular users
 - **Date:** 2026-07-27
 - **Status:** Accepted
-- **Context:** Must cache static assets, knowledge base, and last-fetched news for full offline operation.
-- **Decision:** vite-plugin-pwa with Workbox generateSW strategy. Custom service worker additions for Background Sync in `sw.ts`.
-- **Consequences:** Service worker is auto-generated from Vite config. Manual additions go in the injected `sw.ts`.
-
-### ADR-6: MapLibre GL JS + PMTiles for offline maps
-- **Date:** 2026-07-27
-- **Status:** Accepted
-- **Context:** Must render Bangladesh map tiles with zero external tile server dependency.
-- **Decision:** MapLibre GL JS reads from the local PMTiles file served by the Hono backend at `/tiles/bangladesh.pmtiles`.
-- **Consequences:** Map works fully offline. No Mapbox token required.
+- **Context:** Spec calls for no user auth — just a display name — and a simple admin password.
+- **Decision:** Regular users: display name in WS join payload and POST body (no token). Admin: POST `/api/admin/login` with password → JWT (24h), sent as `Authorization: Bearer` on admin routes.
+- **Consequences:** No user account system to build. Admin middleware validates JWT on every admin route.
 
 ---
 
@@ -87,996 +82,620 @@ These rules apply to every phase. Non-negotiable.
 
 | Layer | Choice | Justification |
 |---|---|---|
-| Framework | React 19 | Stable, concurrent features, excellent ecosystem |
-| Build tool | Vite | Fast HMR, vite-plugin-pwa, excellent TypeScript support |
-| Language | TypeScript (strict) | Type safety, shared types with backend |
-| Styling | Tailwind CSS | Utility-first, fast to build, dark theme via CSS vars |
-| Components | shadcn/ui | Accessible, unstyled base, Tailwind-compatible |
-| PWA | vite-plugin-pwa + Workbox | Zero-config service worker, offline caching |
-| Maps | MapLibre GL JS + pmtiles | Offline tile rendering from local `.pmtiles` file |
-| Global state | Zustand | Lightweight, no boilerplate |
-| Server state | TanStack Query v5 | Cache, background refetch, offline awareness |
-| WebSocket | Native browser WebSocket API | No library needed at this scale |
-| Routing | React Router v6 | Client-side routing |
-| Testing | Manual + Browser DevTools | Explicit trade-off for 72h sprint — see Constraints |
-| Linting | ESLint + Prettier | Code consistency |
+| Language | TypeScript (strict) | Type safety; consistent with frontend |
+| Framework | Hono.js | TypeScript-first, built-in WS, lightweight |
+| Runtime | Node.js 22 LTS | Stable, widely available |
+| Database | SQLite via better-sqlite3 | Zero setup, single file, synchronous API |
+| Auth | JWT (jsonwebtoken) for admin only | Simple, stateless, no user auth needed |
+| Real-time | Hono built-in WebSocket | Same process as REST, no extra infra |
+| RSS parsing | rss-parser | Lightweight, no transitive dependencies |
+| SMS (optional) | Twilio SDK | Check-in alerts; mocked if env vars absent |
+| Logging | console with timestamps (tsx dev) | Sufficient for sprint; Railway streams logs |
+| Testing | Manual + curl | No automated tests in sprint (see Constraints) |
 
 ---
 
 ## Dependency Management
 
 - **Package manager:** npm
-- **Lock file committed:** Yes — `package-lock.json` must always be committed
-- **Rule for adding dependencies:** Only add a dependency if it cannot be reasonably hand-rolled in under 30 minutes. Document the reason in the commit message.
-- **Known constraints:**
-  - No web font libraries (network resilience)
-  - No dependencies that require a CDN or external service at runtime
-  - MapLibre GL JS and pmtiles must be bundled, not CDN-loaded
+- **Lock file committed:** Yes (`package-lock.json`)
+- **Rule for adding dependencies:** Must be listed in this plan or explicitly justified in a commit message. No silent additions.
+- **Known constraints:** No GPL dependencies. Must run on Node.js 22 LTS.
 
 ---
 
 ## Configuration & Environment
 
-- `.env` is gitignored. `.env.example` is committed.
-- The Vite config reads all `VITE_` prefixed vars. Missing required vars should fail the build with a clear Vite plugin error or a runtime `console.error` on startup.
+All secrets in `server/.env` (gitignored). `server/.env.example` committed and kept current.
+
+Config module at `src/config.ts` loads and validates all vars at startup. App must fail fast with a named error if a required var is missing.
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `VITE_API_URL` | Yes | `http://localhost:3000` | Base URL for the Hono REST API |
-| `VITE_WS_URL` | Yes | `ws://localhost:3000/ws` | WebSocket endpoint |
-
-> **Production override:** On Vercel, set `VITE_API_URL` to the Railway backend URL.
+| `PORT` | No | `3000` | HTTP/WS listen port |
+| `NODE_ENV` | No | `development` | `development` or `production` |
+| `ADMIN_PASSWORD` | Yes | — | Admin panel password. Startup warning if set to `changeme`. |
+| `DB_PATH` | No | `./mukto_mesh.db` | Path to SQLite file |
+| `REMOTE_SYNC_URL` | No | — | Railway URL for outbound sync. Feature disabled if absent. |
+| `TWILIO_ACCOUNT_SID` | No | — | Twilio credentials. SMS mocked if any of the three are absent. |
+| `TWILIO_AUTH_TOKEN` | No | — | |
+| `TWILIO_PHONE_NUMBER` | No | — | |
 
 ---
 
-## Phases Skipped
+## Shared Contract (Read Before Coding Anything)
 
-- **Phase 7 (Persistence / External Storage):** The frontend has no database. Persistence is handled by the service worker cache and `localStorage` for user identity. SQLite lives on the backend.
-- **Phase 15 (Deployment & Release):** Deployment is handled by the backend member and shared infrastructure setup. Out of scope for this plan.
+These types are the contract with the frontend. **Do not change them without coordinating with the frontend developer.**
+
+### REST response envelope
+```ts
+// Every REST endpoint returns this shape
+type ApiResponse<T> = { data: T | null; error: string | null }
+```
+
+### WebSocket event enum
+```ts
+enum WsEvent {
+  // Client → Server
+  JOIN            = 'join',
+  MESSAGE         = 'message',
+  SWITCH_CHANNEL  = 'switch_channel',
+  // Server → Client
+  WS_MESSAGE      = 'message',        // same string, direction differs
+  POST_CREATED    = 'post_created',
+  POST_PINNED     = 'post_pinned',
+  CHECKIN_FLAGGED = 'checkin_flagged',
+  BROADCAST       = 'broadcast',
+}
+```
+
+### Channel values
+```ts
+type Channel = 'general' | 'emergency' | 'coordination' | 'medical'
+```
+
+### Post tag values
+```ts
+type PostTag = 'safety' | 'medical' | 'food' | 'legal' | 'news' | 'general'
+```
+
+### Missing person status values
+```ts
+type MissingStatus = 'missing' | 'found' | 'unverified'
+```
+
+### Check-in status values
+```ts
+type CheckinStatus = 'active' | 'unresponsive'
+```
+
+### Map pin type values
+```ts
+type PinType = 'shelter' | 'danger' | 'missing' | 'medical' | 'general'
+```
 
 ---
 
 ## Phase Checklist
 
-- [x] Phase 0: Requirements & Architecture
-- [x] Phase 1: Project Scaffold & Skeleton
-- [x] Phase 2: Types, Constants & API Client
-- [x] Phase 3: Shell — Routing, Layout, Navigation & Theme
-- [x] Phase 4: Static Features — Knowledge Base & News Feed
-- [x] Phase 5: Real-Time — Chat & Live Noticeboard
-- [ ] Phase 6: Forms — Missing Persons & Check-in
-- [ ] Phase 7: Map — Offline Bangladesh Map with Pins
-- [ ] Phase 8: Admin Panel
-- [ ] Phase 9: PWA & Offline Polish
-- [ ] Phase 10: Validation, Error Handling & Accessibility
-- [ ] Phase 11: Performance Optimization
-- [ ] Phase 12: Refactoring & Cleanup
+- [ ] Phase 1: Scaffold & Config
+- [ ] Phase 2: Database Schema & Seed
+- [ ] Phase 3: REST Routes — Noticeboard & Missing Persons
+- [ ] Phase 4: REST Routes — Check-in, News, Map Pins, Admin
+- [ ] Phase 5: WebSocket — Chat Server
+- [ ] Phase 6: Background Jobs — Check-in Monitor & RSS Fetcher
+- [ ] Phase 7: External Integrations — Twilio & Remote Sync
+- [ ] Phase 8: Security — Admin Auth & Input Validation
+- [ ] Phase 9: Error Handling & Observability
 
 ---
 
-## Phase 0 — Requirements & Architecture
+## Phase 1 — Scaffold & Config
 
 ### Goals
+Boot a Hono server that passes a health check. Nothing else.
 
-Confirm what the frontend must do and how it fits into the overall Mukto Mesh system before writing code.
-
-### Summary
-
-Mukto Mesh frontend is a React 19 PWA that connects to a local Hono.js server over LAN (or Railway when online). It serves as the browser client for all community users on the same WiFi hotspot. It must work fully offline after first load, be installable as a PWA, render correctly on budget Android phones, and display all content in Bangla and English.
-
-### Functional scope (frontend owns)
-
-- Display name entry on first visit (stored in `localStorage`)
-- Real-time chat UI (WebSocket, 4 channels)
-- Community noticeboard UI (REST + WebSocket push for new posts)
-- Knowledge base: static content rendered from bundled `.md` files
-- Safe check-in UI (register, ping "I'm safe")
-- Missing person registry: submit form, search, display cards
-- Offline news feed: display cached articles from backend
-- Offline Bangladesh map: render PMTiles tiles, drop and view pins
-- Admin panel UI: connected users, check-in statuses, pin/unpin/delete posts, emergency broadcast
-- PWA install, service worker caching, offline badge
-- Language toggle (Bangla ↔ English) accessible from every page
-
-### Out of scope for frontend
-
-- RSS fetching (backend job)
-- Check-in interval monitoring and Twilio SMS (backend job)
-- SQLite operations (backend only)
-- Auto-sync Background Sync registration (`sw.ts` stub only — backend drives the sync endpoint)
-- Deployment and GitHub Release packaging
-
-### Acceptance Criteria
-
-- [ ] This plan is read and understood in full before Phase 1 begins.
-- [ ] The backend API contract (Section 12 of SPEC.md) is confirmed as the interface this frontend consumes.
-- [ ] Environment variable list is agreed and `.env.example` is ready.
-
----
-
-## Phase 1 — Project Scaffold & Skeleton
-
-### Goals
-
-- Working Vite + React 19 + TypeScript + Tailwind + shadcn/ui scaffold
-- PWA manifest and vite-plugin-pwa configured
-- Colour tokens and theme defined
-- Dev server boots; root route renders without errors
+### Folder structure to create
+```
+server/
+├── src/
+│   ├── config.ts          # Env var loader and validator
+│   ├── logger.ts          # Timestamped console wrapper
+│   ├── db/
+│   │   ├── index.ts       # DB connection singleton (stub — no tables yet)
+│   │   └── schema.ts      # SQL CREATE TABLE strings (stub)
+│   ├── routes/            # Empty folder
+│   ├── ws/                # Empty folder
+│   ├── jobs/              # Empty folder
+│   ├── middleware/        # Empty folder
+│   └── index.ts           # Hono app entry point
+├── .env.example
+├── tsconfig.json
+└── package.json
+```
 
 ### Tasks
 
-1. Scaffold with Vite:
-   ```bash
-   npm create vite@latest client -- --template react-ts
-   cd client
-   npm install
-   ```
-
-2. Install core dependencies — **only what this phase needs:**
-   ```bash
-   npm install react-router-dom zustand @tanstack/react-query tailwindcss @tailwindcss/vite
-   npm install -D vite-plugin-pwa prettier eslint
-   ```
-
-3. Configure Tailwind with the exact design tokens from the spec. Create `src/styles/tokens.css`:
-   ```css
-   :root {
-     --color-bg:       #0a0a0a;
-     --color-surface:  #141414;
-     --color-border:   #262626;
-     --color-primary:  #006A4E;  /* Bangladesh green */
-     --color-danger:   #C8102E;  /* Bangladesh red */
-     --color-text:     #f5f5f5;
-     --color-muted:    #737373;
-     --radius:         0.375rem;
-   }
-   ```
-   Reference only these variables in all components. No hardcoded hex values.
-
-4. Configure `tailwind.config.ts` to extend the theme with the tokens above.
-
-5. Install and initialise shadcn/ui:
-   ```bash
-   npx shadcn@latest init
-   ```
-   Choose dark mode, Tailwind CSS, and `src/components/ui` as the component directory.
-
-6. Configure `vite.config.ts` with:
-   - `vite-plugin-pwa` — manifest with Mukto Mesh name, icons, `theme_color: "#006A4E"`, `background_color: "#0a0a0a"`, `display: "standalone"`
-   - Workbox `generateSW` strategy — pre-cache all static assets and routes
-   - `@/` alias pointing to `src/`
-
-7. Create `client/.env.example`:
-   ```env
-   VITE_API_URL=http://localhost:3000
-   VITE_WS_URL=ws://localhost:3000/ws
-   ```
-
-8. Create `src/lib/config.ts` — reads and exports env vars. Log a console error and throw if required vars are missing.
-
-9. Create stub `src/App.tsx` that renders `<h1>Mukto Mesh</h1>` in the correct background colour. Confirm the dark background renders.
-
-10. Configure ESLint and Prettier. Both must pass on the empty scaffold with zero warnings.
-
-### Folder Structure
-
-```
-client/
-├── public/
-│   ├── icons/                   # PWA icons (192x192, 512x512)
-│   └── manifest.webmanifest     # auto-generated by vite-plugin-pwa
-├── src/
-│   ├── components/
-│   │   ├── ui/                  # shadcn/ui primitives
-│   │   ├── Chat/
-│   │   ├── Noticeboard/
-│   │   ├── KnowledgeBase/
-│   │   ├── CheckIn/
-│   │   ├── MissingPersons/
-│   │   ├── NewsFeed/
-│   │   ├── Map/
-│   │   └── Admin/
-│   ├── pages/
-│   │   ├── Dashboard.tsx
-│   │   ├── Chat.tsx
-│   │   ├── Noticeboard.tsx
-│   │   ├── KnowledgeBase.tsx
-│   │   ├── CheckIn.tsx
-│   │   ├── MissingPersons.tsx
-│   │   ├── News.tsx
-│   │   ├── Map.tsx
-│   │   └── Admin.tsx
-│   ├── content/                 # Preloaded knowledge base .md files
-│   │   ├── rights.bn.md
-│   │   ├── rights.en.md
-│   │   ├── firstaid.bn.md
-│   │   ├── firstaid.en.md
-│   │   ├── contacts.bn.md
-│   │   ├── contacts.en.md
-│   │   ├── checklist.bn.md
-│   │   ├── checklist.en.md
-│   │   ├── july2024.bn.md
-│   │   └── july2024.en.md
-│   ├── store/
-│   │   ├── useAuthStore.ts      # display name, admin JWT
-│   │   ├── useChatStore.ts      # messages, active channel
-│   │   └── useLanguageStore.ts  # 'en' | 'bn'
-│   ├── hooks/
-│   │   ├── useWebSocket.ts
-│   │   └── useOfflineStatus.ts
-│   ├── lib/
-│   │   ├── api.ts               # fetch wrapper using VITE_API_URL
-│   │   ├── config.ts            # env var loader
-│   │   └── sync.ts              # Background Sync registration stub
-│   ├── types/
-│   │   └── index.ts             # all shared TypeScript types
-│   ├── styles/
-│   │   └── tokens.css
-│   ├── App.tsx
-│   ├── main.tsx
-│   └── sw.ts                    # Custom service worker additions
-├── vite.config.ts
-├── tailwind.config.ts
-├── tsconfig.json
-├── .env.example
-└── package.json
-```
+1. `npm init` and install **only** these Phase 1 dependencies:
+   - `hono`, `@hono/node-server`
+   - `better-sqlite3`, `@types/better-sqlite3`
+   - `typescript`, `tsx`, `@types/node`
+2. Configure `tsconfig.json`: `"strict": true`, `"module": "NodeNext"`, `"target": "ES2022"`, path alias `@/*` → `src/*`.
+3. Implement `src/config.ts`:
+   - Load all env vars from the table above using `process.env`.
+   - Throw a named error listing any missing required vars.
+   - Print a startup `WARN` if `ADMIN_PASSWORD === 'changeme'`.
+   - Export a single frozen `config` object.
+4. Implement `src/logger.ts`: `log.info(msg)`, `log.warn(msg)`, `log.error(msg)` — each prefixes `[ISO timestamp] [LEVEL]`.
+5. Implement `src/index.ts`:
+   - Create Hono app.
+   - `GET /health` → `200 { data: { status: 'ok', timestamp: ISO }, error: null }`.
+   - Serve on `config.PORT` via `@hono/node-server`.
+   - Log `Server running on port X` at startup.
+6. Add npm scripts: `"dev": "tsx watch src/index.ts"`, `"start": "tsx src/index.ts"`.
+7. Commit `.env.example` with all variables documented. Add `.env` and `mukto_mesh.db` to `.gitignore`.
 
 ### Acceptance Criteria
 
 - [ ] `npm install` completes with no errors.
-- [ ] `npm run dev` boots and root route renders the dark background with "Mukto Mesh" heading.
-- [ ] PWA manifest is generated and visible in browser DevTools → Application → Manifest.
-- [ ] `.env` is gitignored; `.env.example` is committed with both variables documented.
-- [ ] All target folders exist (even if empty).
-- [ ] ESLint and Prettier pass with zero warnings on the scaffold.
-- [ ] No hardcoded hex colours exist anywhere — all via CSS tokens.
+- [ ] `npm run dev` boots without errors.
+- [ ] `curl http://localhost:3000/health` returns `200 { data: { status: 'ok', ... }, error: null }`.
+- [ ] Missing a required env var causes a clear named error at startup, not a runtime crash later.
+- [ ] `ADMIN_PASSWORD=changeme` prints a startup warning.
+- [ ] `.env` is gitignored; `.env.example` is committed.
 
 ### AI Agent Guidance
 
-> Do not add any pages, routes, data fetching, or domain logic in this phase. The only output is a bootable scaffold with the correct folder structure, theme tokens, and PWA config. If something seems obviously needed, note it with `// Phase N` and move on.
+> Do not create any route files, DB tables, or business logic. The only endpoint that should exist after this phase is `/health`. If you find yourself writing a route for posts or chat, stop and move it to Phase 3.
 
 ---
 
-## Phase 2 — Types, Constants & API Client
+## Phase 2 — Database Schema & Seed
 
 ### Goals
-
-- Define all shared TypeScript types that every component depends on
-- Define all domain constants (enums, status values, channel names, tag names)
-- Implement the API client wrapper that all data-fetching hooks will use
-- No UI yet — this is the data contract layer
+Define and create all SQLite tables. Implement a DB access module with typed query functions. Seed with minimal test data.
 
 ### Tasks
 
-1. In `src/types/index.ts`, define TypeScript interfaces for every entity the frontend consumes:
+1. Install `better-sqlite3` (already in Phase 1) — no new deps needed.
+2. Implement `src/db/index.ts`:
+   - Open/create `config.DB_PATH` synchronously on import.
+   - Run all `CREATE TABLE IF NOT EXISTS` statements from `schema.ts` on startup.
+   - Export the `db` instance as a singleton.
+   - Log `Database ready at [path]` on successful open.
+3. Implement `src/db/schema.ts` — define all `CREATE TABLE IF NOT EXISTS` SQL strings for every table below. Apply indexes at creation time.
 
-   ```ts
-   // Matches the backend DB schema exactly
+**Tables to create** (exact column names and types from SPEC.md §11):
 
-   type Channel = 'general' | 'emergency' | 'coordination' | 'medical'
-   type PostTag = 'safety' | 'medical' | 'food' | 'legal' | 'news' | 'general'
-   type MissingStatus = 'missing' | 'found' | 'unverified'
-   type CheckinStatus = 'active' | 'unresponsive'
-   type PinType = 'shelter' | 'danger' | 'missing' | 'medical' | 'general'
-   type NewsSource = 'prothomalo' | 'dailystar' | 'bdnews24'
-   type Language = 'en' | 'bn'
+```sql
+-- users
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  display_name TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
 
-   interface ChatMessage {
-     id: string
-     displayName: string
-     channel: Channel
-     content: string
-     createdAt: number       // Unix timestamp
-   }
+-- messages
+CREATE TABLE IF NOT EXISTS messages (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_messages_channel ON messages(channel);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
 
-   interface Post {
-     id: string
-     userId: string
-     displayName: string
-     tag: PostTag
-     content: string
-     pinned: boolean
-     createdAt: number
-   }
+-- posts
+CREATE TABLE IF NOT EXISTS posts (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  tag TEXT NOT NULL,
+  content TEXT NOT NULL,
+  pinned INTEGER DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at);
 
-   interface MissingPerson {
-     id: string
-     name: string
-     age: number | null
-     gender: string | null
-     lastLocation: string
-     description: string | null
-     contactName: string
-     contactPhone: string
-     photoUrl: string | null
-     status: MissingStatus
-     synced: boolean
-     createdAt: number
-   }
+-- checkins
+CREATE TABLE IF NOT EXISTS checkins (
+  id TEXT PRIMARY KEY,
+  display_name TEXT NOT NULL,
+  contact_phone TEXT NOT NULL,
+  interval_hours INTEGER NOT NULL,
+  last_checkin_at INTEGER NOT NULL,
+  status TEXT DEFAULT 'active',
+  created_at INTEGER NOT NULL
+);
 
-   interface Checkin {
-     id: string
-     displayName: string
-     contactPhone: string
-     intervalHours: 2 | 4 | 6 | 12
-     lastCheckinAt: number
-     status: CheckinStatus
-     createdAt: number
-   }
+-- missing_persons
+CREATE TABLE IF NOT EXISTS missing_persons (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  age INTEGER,
+  gender TEXT,
+  last_location TEXT NOT NULL,
+  description TEXT,
+  contact_name TEXT NOT NULL,
+  contact_phone TEXT NOT NULL,
+  photo_url TEXT,
+  status TEXT DEFAULT 'missing',
+  synced INTEGER DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_missing_status ON missing_persons(status);
 
-   interface NewsArticle {
-     id: string
-     title: string
-     source: NewsSource
-     url: string
-     content: string | null
-     publishedAt: number | null
-     fetchedAt: number
-   }
+-- news_articles
+CREATE TABLE IF NOT EXISTS news_articles (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  source TEXT NOT NULL,
+  url TEXT NOT NULL UNIQUE,
+  content TEXT,
+  published_at INTEGER,
+  fetched_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_news_fetched_at ON news_articles(fetched_at);
 
-   interface MapPin {
-     id: string
-     label: string
-     type: PinType
-     lat: number
-     lng: number
-     description: string | null
-     userId: string | null
-     synced: boolean
-     createdAt: number
-   }
+-- map_pins
+CREATE TABLE IF NOT EXISTS map_pins (
+  id TEXT PRIMARY KEY,
+  label TEXT NOT NULL,
+  type TEXT NOT NULL,
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  description TEXT,
+  user_id TEXT,
+  synced INTEGER DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+```
 
-   // API response envelope — matches backend contract
-   interface ApiResponse<T> {
-     data: T | null
-     error: string | null
-   }
+4. Implement query helper modules — one file per domain, in `src/db/`:
+   - `src/db/posts.ts` — `getAllPosts()`, `createPost(data)`, `setPinned(id, pinned)`, `deletePost(id)`
+   - `src/db/missing.ts` — `getAllMissing()`, `createMissing(data)`, `updateMissingStatus(id, status)`, `searchMissing(q)`, `getUnsynced()`
+   - `src/db/checkins.ts` — `registerCheckin(data)`, `pingCheckin(id)`, `getAllCheckins()`, `flagUnresponsive(id)`
+   - `src/db/news.ts` — `getAllNews()`, `upsertArticle(data)`, `getLastFetchedAt()`
+   - `src/db/pins.ts` — `getAllPins()`, `createPin(data)`, `deletePin(id)`, `getUnsynced()`
+   - `src/db/messages.ts` — `getMessages(channel, limit?)`, `createMessage(data)`
+   - `src/db/users.ts` — `upsertUser(id, displayName)`
 
-   // WebSocket event payloads
-   type WsEventType =
-     | 'message'
-     | 'post_created'
-     | 'post_pinned'
-     | 'checkin_flagged'
-     | 'broadcast'
+   Each function uses parameterised prepared statements. All IDs are `crypto.randomUUID()`. Timestamps are `Date.now()` (Unix ms).
 
-   interface WsMessage {
-     type: WsEventType
-     payload: unknown
-   }
-   ```
-
-2. In `src/lib/constants.ts`, define all domain constants:
-   ```ts
-   export const CHANNELS: Channel[] = ['general', 'emergency', 'coordination', 'medical']
-   export const POST_TAGS: PostTag[] = ['safety', 'medical', 'food', 'legal', 'news', 'general']
-   export const CHECKIN_INTERVALS = [2, 4, 6, 12] as const
-   export const PIN_TYPES: PinType[] = ['shelter', 'danger', 'missing', 'medical', 'general']
-   export const NEWS_SOURCES: NewsSource[] = ['prothomalo', 'dailystar', 'bdnews24']
-   ```
-
-3. Implement `src/lib/api.ts` — a typed fetch wrapper:
-   - Base URL from `config.ts`
-   - Generic `get<T>`, `post<T>`, `patch<T>`, `del<T>` functions
-   - All return `ApiResponse<T>` — never throw; catch and return `{ data: null, error: message }`
-   - Attach `Authorization: Bearer <token>` header automatically when admin JWT exists in `useAuthStore`
-
-4. Implement the three Zustand stores (no logic yet — just state shape and setters):
-
-   **`useAuthStore.ts`**
-   ```ts
-   interface AuthState {
-     displayName: string | null
-     adminToken: string | null
-     setDisplayName: (name: string) => void
-     setAdminToken: (token: string | null) => void
-     isAdmin: () => boolean
-   }
-   ```
-   Hydrate `displayName` and `adminToken` from `localStorage` on store init.
-
-   **`useChatStore.ts`**
-   ```ts
-   interface ChatState {
-     messages: ChatMessage[]
-     activeChannel: Channel
-     unreadCounts: Record<Channel, number>
-     addMessage: (msg: ChatMessage) => void
-     setActiveChannel: (channel: Channel) => void
-     markChannelRead: (channel: Channel) => void
-   }
-   ```
-
-   **`useLanguageStore.ts`**
-   ```ts
-   interface LanguageState {
-     language: Language
-     setLanguage: (lang: Language) => void
-   }
-   ```
-   Persist to `localStorage`.
-
-5. Implement `src/hooks/useOfflineStatus.ts`:
-   - Wraps `navigator.onLine` and listens to `online`/`offline` window events
-   - Returns `{ isOnline: boolean }`
-
-6. Implement stub `src/lib/sync.ts` — exports `registerBackgroundSync()` which registers a Background Sync tag `'sync-missing'` and `'sync-pins'` via the service worker. No-ops gracefully if the API is unavailable.
+5. Seed: on first run, if `posts` table is empty, insert one pinned post: `{ tag: 'general', content: 'Mukto Mesh node is running. Stay safe.', display_name: 'System', pinned: 1 }`.
 
 ### Acceptance Criteria
 
-- [ ] Every entity interface is defined with no `any` types.
-- [ ] `api.ts` wrapper handles network errors without throwing — returns `{ data: null, error: "..." }`.
-- [ ] `useAuthStore` hydrates `displayName` from `localStorage` on first render.
-- [ ] `useLanguageStore` persists language choice to `localStorage`.
-- [ ] TypeScript strict mode passes with zero errors across all new files.
-- [ ] No UI components are created in this phase.
+- [ ] `npm run dev` creates `mukto_mesh.db` with all tables on first boot.
+- [ ] Re-running does not error (all statements use `CREATE TABLE IF NOT EXISTS`).
+- [ ] `db.prepare('SELECT * FROM posts').all()` returns at least the seed post.
+- [ ] `db.prepare('SELECT * FROM users').all()` returns empty array (not an error).
+- [ ] No raw SQL exists outside of `src/db/` files.
+- [ ] All query functions use prepared statements (no string concatenation of user input).
 
 ### AI Agent Guidance
 
-> This phase is purely types, constants, stores, and the API client. No JSX, no routes, no fetching from a real server yet. If you find yourself writing a component, stop.
+> Do not write any route handlers or HTTP endpoints in this phase. The only code added is DB schema definitions and query functions. If you are writing a `new Hono()` route, stop.
 
 ---
 
-## Phase 3 — Shell: Routing, Layout, Navigation & Theme
+## Phase 3 — REST Routes: Noticeboard & Missing Persons
 
 ### Goals
-
-- Working app shell: all routes defined, all pages stub-rendered
-- Mobile bottom nav and desktop sidebar
-- Display name entry modal on first visit
-- Language toggle functional
-- Offline badge wired to `useOfflineStatus`
+Expose the noticeboard and missing persons features via REST. All responses use the `ApiResponse<T>` envelope.
 
 ### Tasks
 
-1. Set up React Router in `src/App.tsx` with all routes:
-   ```
-   /              → Dashboard.tsx (redirect to /chat)
-   /chat          → Chat.tsx
-   /board         → Noticeboard.tsx
-   /info          → KnowledgeBase.tsx
-   /people        → MissingPersons.tsx
-   /checkin       → CheckIn.tsx
-   /news          → News.tsx
-   /map           → Map.tsx
-   /admin         → Admin.tsx (admin-guarded)
-   ```
-
-2. Implement `src/components/Layout.tsx` — wraps all pages with:
-   - Top bar: "Mukto Mesh" wordmark + language toggle (EN | বাং) + offline badge
-   - Bottom navigation bar (mobile, `<768px`): Chat · Board · Info · People · Map — icons + labels
-   - Sidebar (desktop, `≥768px`): same 5 items + admin lock icon at bottom
-   - `<Outlet />` for page content
-
-3. Implement `src/components/OfflineBadge.tsx`:
-   - Shows a persistent banner when `!isOnline`
-   - Text: "Offline mode — all features still work" (Bangla equivalent when `language === 'bn'`)
-   - Background: `var(--color-primary)` with `var(--color-text)`
-
-4. Implement `src/components/DisplayNameModal.tsx`:
-   - Shows on first visit when `displayName` is null in `useAuthStore`
-   - Single text input: "Enter your display name"
-   - On submit: calls `setDisplayName`, dismisses modal
-   - No network call — local only
-   - Cannot be dismissed without entering a name
-
-5. Implement `src/components/LanguageToggle.tsx`:
-   - Two buttons: EN · বাং
-   - Calls `useLanguageStore.setLanguage`
-   - Active language is visually highlighted
-
-6. Create stub pages for all 8 routes. Each stub must render:
-   - Page title
-   - `<p>Coming in a later phase.</p>`
-   - Loading state skeleton (even if never triggered — ensures the pattern exists)
-   - Error state placeholder
-   - Empty state placeholder
-
-7. Confirm bottom nav active state highlights the correct tab on each route.
-
-8. Confirm admin route shows a "Not authorised" message when `adminToken` is null.
+1. Create `src/middleware/apiResponse.ts` — a helper `ok(data)` and `err(message, status)` that return properly shaped Hono responses.
+2. Create `src/routes/posts.ts` — mount at `/api/posts`:
+   - `GET /api/posts` → all posts, pinned first, descending by `created_at`. Returns `ApiResponse<Post[]>`.
+   - `POST /api/posts` → body: `{ display_name, tag, content }`. Validate: all required, `tag` must be a valid `PostTag`. Returns `ApiResponse<Post>`. After DB insert, broadcast `post_created` WS event (broadcast helper is a stub returning void until Phase 5).
+   - `PATCH /api/posts/:id/pin` → admin only (stub — skip auth check until Phase 8). Toggles `pinned`. Broadcasts `post_pinned`. Returns `ApiResponse<{ id, pinned }>`.
+   - `DELETE /api/posts/:id` → admin only (stub). Returns `ApiResponse<{ deleted: true }>`.
+3. Create `src/routes/missing.ts` — mount at `/api/missing`:
+   - `GET /api/missing` → all entries, descending by `created_at`. Returns `ApiResponse<MissingPerson[]>`.
+   - `GET /api/missing/search?q=` → search by name or last_location (SQL `LIKE`). Returns `ApiResponse<MissingPerson[]>`.
+   - `POST /api/missing` → body: `{ name, last_location, contact_name, contact_phone, age?, gender?, description?, photo_url? }`. Validate required fields. Returns `ApiResponse<MissingPerson>`.
+   - `PATCH /api/missing/:id/status` → admin only (stub). Body: `{ status }`. Validates against `MissingStatus`. Returns `ApiResponse<MissingPerson>`.
+4. Mount both route modules in `src/index.ts` under their respective paths.
+5. Implement a global 404 handler: any unmatched route returns `{ data: null, error: 'Not found' }` with status 404.
 
 ### Acceptance Criteria
 
-- [x] All 8 routes render their stub page without errors.
-- [x] Bottom nav is visible on mobile; sidebar on desktop.
-- [x] Language toggle switches the `language` state; the active language is highlighted.
-- [x] Display name modal appears on first visit and cannot be dismissed without entering a name.
-- [ ] Offline badge appears when `navigator.onLine` is false (test via DevTools → Network → Offline). — **requires manual browser test**
-- [x] Admin route shows "Not authorised" when no admin token is present.
-- [x] All tap targets are minimum 44px height.
-- [x] Zero hardcoded colours — all via CSS token variables.
+- [ ] `GET /api/posts` returns `{ data: [...], error: null }` with the seed post.
+- [ ] `POST /api/posts` with valid body returns `201` with the created post.
+- [ ] `POST /api/posts` with missing `content` returns `400` with a descriptive error string.
+- [ ] `POST /api/posts` with invalid `tag` returns `400`.
+- [ ] `GET /api/missing` returns `{ data: [], error: null }` (empty array, not an error).
+- [ ] `POST /api/missing` with valid body returns `201`.
+- [ ] `GET /api/missing/search?q=test` returns `{ data: [], error: null }` (no crash on no results).
+- [ ] No endpoint returns a raw object without the `{ data, error }` wrapper.
+- [ ] Unmatched routes return `404` with `{ data: null, error: 'Not found' }`.
 
 ### AI Agent Guidance
 
-> No data fetching in this phase. All pages are stubs. The goal is a fully navigable shell that looks right and handles the three states (loading, error, empty) as structural patterns, not yet wired to real data.
+> Admin auth stubs (`PATCH /pin`, `DELETE`, `PATCH /status`) do not need any auth logic yet — just leave a comment `// TODO: admin auth (Phase 8)` and pass through. Do not implement JWT validation here.
 
 ---
 
-## Phase 4 — Static Features: Knowledge Base & News Feed
+## Phase 4 — REST Routes: Check-in, News, Map Pins, Messages, Admin Login
 
 ### Goals
-
-- Knowledge base fully functional — static content, language toggle, client-side search — with zero network dependency
-- News feed displays cached articles from the backend API
+Implement all remaining REST routes.
 
 ### Tasks
 
-#### Knowledge Base
+1. Create `src/routes/checkin.ts` — mount at `/api/checkin`:
+   - `POST /api/checkin/register` → body: `{ display_name, contact_phone, interval_hours }`. Validate: `interval_hours` must be one of `[2, 4, 6, 12]`. Sets `last_checkin_at` to `Date.now()`, `status` to `'active'`. Returns `ApiResponse<Checkin>`.
+   - `POST /api/checkin/ping` → body: `{ id }`. Updates `last_checkin_at`, resets `status` to `'active'`. Returns `ApiResponse<{ ok: true }>`.
+   - `GET /api/checkin/status` → admin only (stub). Returns `ApiResponse<Checkin[]>`.
 
-1. Import all `.md` files from `src/content/` using Vite's `?raw` import syntax. Do not use a markdown parsing library — use a lightweight renderer (e.g., `marked` or hand-rolled for the subset of markdown used) or convert content to JSX at build time.
+2. Create `src/routes/news.ts` — mount at `/api/news`:
+   - `GET /api/news` → all cached articles, descending by `published_at`. Returns `ApiResponse<NewsArticle[]>` plus `{ lastFetchedAt: number | null }` in the data object.
+   - `POST /api/news/refresh` → triggers the RSS fetch job manually (call the fetcher function directly — the job module is implemented in Phase 6, stub it as a no-op returning void for now). Returns `ApiResponse<{ triggered: true }>`.
 
-2. Implement `src/pages/KnowledgeBase.tsx`:
-   - Section list: Your Rights · First Aid · Emergency Contacts · Crisis Checklist · July 2024
-   - Clicking a section renders the `.md` content for the active language
-   - Language toggle switches between `.bn.md` and `.en.md` content instantly
-   - Client-side search: filter sections by keyword match against content string
-   - Search input uses `useState` — no server call, no TanStack Query
+3. Create `src/routes/pins.ts` — mount at `/api/pins`:
+   - `GET /api/pins` → all pins. Returns `ApiResponse<MapPin[]>`.
+   - `POST /api/pins` → body: `{ label, type, lat, lng, description?, user_id? }`. Validate: `type` must be valid `PinType`, `lat`/`lng` must be numbers. Returns `ApiResponse<MapPin>`.
+   - `DELETE /api/pins/:id` → admin only (stub). Returns `ApiResponse<{ deleted: true }>`.
 
-3. All knowledge base content is bundled at build time. Verify: killing the dev server and loading the page from the service worker cache still renders all content.
+4. Create `src/routes/messages.ts` — mount at `/api/messages`:
+   - `GET /api/messages?channel=` → returns last 100 messages for the channel. Validate channel value. Returns `ApiResponse<Message[]>`.
 
-4. Write all 10 knowledge base content files (`rights.bn.md`, `rights.en.md`, etc.) with accurate, Bangladesh-specific content in the correct language. This is production content, not placeholder text.
+5. Create `src/routes/admin.ts` — mount at `/api/admin`:
+   - `POST /api/admin/login` → body: `{ password }`. Compare to `config.ADMIN_PASSWORD`. If match, sign and return a JWT (24h expiry, secret = `ADMIN_PASSWORD`). Returns `ApiResponse<{ token: string }>`. If mismatch, return `401 { data: null, error: 'Invalid password' }`.
+   - `POST /api/admin/broadcast` → admin only (stub for auth). Body: `{ message }`. Broadcasts `broadcast` WS event to all connected clients. Returns `ApiResponse<{ sent: true }>`.
+   - `GET /api/admin/connections` → admin only (stub). Returns `ApiResponse<{ count: number }>` (return 0 until Phase 5).
 
-   Content requirements per section:
-   - **Your Rights:** Police powers, right to assembly, what to do if arrested in Bangladesh
-   - **First Aid:** Crowd crush, tear gas, gunshot wounds, burns, basic triage
-   - **Emergency Contacts:** Legal aid orgs, medical helplines, human rights bodies in Bangladesh
-   - **Crisis Checklist:** 72-hour preparedness list, what to have before a shutdown
-   - **July 2024 — What We Learned:** Factual documented account of what happened and what worked
+6. Create `src/routes/sync.ts` — mount at `/api/sync` (this is the endpoint the remote Railway instance exposes to receive data from local nodes):
+   - `POST /api/sync/missing` → body: `{ entries: MissingPerson[] }`. Upserts each entry. Returns `ApiResponse<{ synced: number }>`.
+   - `POST /api/sync/pins` → body: `{ pins: MapPin[] }`. Upserts each pin. Returns `ApiResponse<{ synced: number }>`.
 
-#### News Feed
-
-5. Implement `GET /api/news` data fetching via TanStack Query in `src/pages/News.tsx`.
-
-6. Display articles as cards: source badge, title, timestamp (human-readable, e.g. "3 hours ago"), content snippet.
-
-7. Source badge colour per source:
-   - Prothom Alo: primary green
-   - The Daily Star: neutral
-   - bdnews24: neutral
-
-8. Show "Last fetched: [time ago]" — derive from the most recent `fetchedAt` value in the response.
-
-9. "Refresh" button — calls `POST /api/news/refresh`. Disabled and shows "Offline — cannot refresh" when `!isOnline`.
-
-10. Empty state: "No news cached yet. Connect to the internet and refresh."
-
-11. Error state: "Could not load news. Using cached version if available."
+7. Mount all new route modules in `src/index.ts`.
 
 ### Acceptance Criteria
 
-- [x] All 5 knowledge base sections render in both Bangla and English.
-- [x] Language toggle on the knowledge base page switches content instantly with no network request.
-- [x] Client-side search filters sections correctly.
-- [ ] Knowledge base content is fully readable with the network tab showing no requests. — **requires manual browser test (service worker caching)**
-- [x] News feed displays articles from `GET /api/news` via TanStack Query.
-- [x] Refresh button is disabled when offline.
-- [x] All three states (loading, error, empty) are implemented for the news feed.
-- [x] Knowledge base content is production-quality, not placeholder text.
+- [ ] `POST /api/checkin/register` with valid body returns a checkin record.
+- [ ] `POST /api/checkin/register` with `interval_hours: 3` returns `400`.
+- [ ] `POST /api/checkin/ping` with a valid id resets `last_checkin_at`.
+- [ ] `GET /api/news` returns `{ data: { articles: [], lastFetchedAt: null }, error: null }` on empty DB.
+- [ ] `POST /api/admin/login` with correct password returns a JWT string.
+- [ ] `POST /api/admin/login` with wrong password returns `401`.
+- [ ] `GET /api/messages?channel=general` returns an array (empty on fresh DB).
+- [ ] `GET /api/messages?channel=invalid` returns `400`.
+- [ ] All routes use `ApiResponse<T>` envelope without exception.
+
+---
+
+## Phase 5 — WebSocket: Chat Server
+
+### Goals
+Implement the WebSocket server for real-time chat and server-push events. Wire all broadcast stubs from Phases 3 and 4.
+
+### Tasks
+
+1. Install no new deps — Hono has built-in WS support via `@hono/node-server`.
+2. Create `src/ws/chat.ts`:
+   - Define the `WsClient` type: `{ ws: WebSocket, displayName: string, channel: Channel, connectedAt: number }`.
+   - Maintain a `clients: Map<string, WsClient>` (keyed by connection UUID).
+   - Export `broadcastToChannel(channel, eventType, payload)` — sends only to clients in that channel.
+   - Export `broadcastToAll(eventType, payload)` — sends to all connected clients.
+   - Export `getConnectionCount()` — returns `clients.size`.
+   - Implement `onOpen(ws)`: add client to map with a new UUID, log connection count.
+   - Implement `onMessage(ws, clientId, raw)`: parse JSON, switch on event type:
+     - `join`: set `displayName` and `channel` on the client entry. Send back a `join_ack` with the last 50 messages for that channel (read from DB).
+     - `message`: validate `channel` and `content`. Insert into `messages` table via `src/db/messages.ts`. Call `broadcastToChannel(channel, 'message', messagePayload)`.
+     - `switch_channel`: update client's `channel`. Send back last 50 messages for new channel.
+   - Implement `onClose(ws, clientId)`: remove from `clients` map, log.
+   - Every `ws.send()` call is wrapped in try/catch — stale connection errors are caught and the client is removed from the map.
+3. Wire the WS handler into `src/index.ts` using Hono's WS upgrade helper.
+4. Replace all broadcast stubs from Phases 3 and 4 with real calls to `broadcastToAll` or `broadcastToChannel`.
+5. Wire `GET /api/admin/connections` to return `getConnectionCount()`.
+
+### Message payload shape (server → client)
+```ts
+{
+  type: 'message',
+  id: string,
+  displayName: string,
+  channel: Channel,
+  content: string,
+  createdAt: number
+}
+```
+
+### Acceptance Criteria
+
+- [ ] Two browser tabs can open a WS connection, send messages, and both receive them in real time.
+- [ ] Messages in `general` are not received by a client in `emergency`.
+- [ ] On `join`, the client receives the last 50 messages for their channel.
+- [ ] Closing one tab does not crash the server or cause errors for remaining clients.
+- [ ] `GET /api/admin/connections` returns the correct live count.
+- [ ] Creating a noticeboard post triggers a `post_created` WS event to all clients.
+- [ ] Admin broadcast triggers a `broadcast` WS event to all clients.
+- [ ] All sent payloads include a `type` field matching the `WsEvent` enum values.
 
 ### AI Agent Guidance
 
-> The knowledge base must work with the network fully offline after first load. Test this by: loading the page, then in DevTools → Network → checking Offline, then navigating between knowledge base sections. Everything must still work. If it doesn't, the service worker precache config in vite.config.ts needs fixing.
+> The `broadcast` helper must guard against sending to closed connections. The pattern is: attempt `ws.send()`, catch any error, remove the client from the map if the send fails. Never let a single failed send propagate.
 
 ---
 
-## Phase 5 — Real-Time: Chat & Live Noticeboard
+## Phase 6 — Background Jobs: Check-in Monitor & RSS Fetcher
 
 ### Goals
-
-- Implement `useWebSocket` hook with full connection lifecycle and reconnection logic
-- Chat UI: 4 channels, real-time messages, unread badges
-- Noticeboard: REST + WebSocket push for new posts, pinning
+Implement recurring server-side jobs: the check-in interval monitor and the RSS news fetcher.
 
 ### Tasks
 
-#### useWebSocket Hook
+1. Create `src/jobs/checkinMonitor.ts`:
+   - Export `startCheckinMonitor()` which sets up a `setInterval` running every **60 seconds**.
+   - On each tick: query all `active` check-ins from DB. For each one, calculate if `Date.now() - last_checkin_at > interval_hours * 3600 * 1000`. If yes:
+     - Call `flagUnresponsive(id)` to update DB status to `'unresponsive'`.
+     - Create a noticeboard post: `{ tag: 'safety', display_name: 'System', content: 'User [name] has not checked in and is unresponsive. Last check-in: [time].' }`.
+     - Call `broadcastToAll('checkin_flagged', { displayName: name })`.
+     - If Twilio is configured: send SMS to `contact_phone` (implemented in Phase 7 — stub as a no-op log for now).
+   - The monitor must not crash if DB throws — catch, log, continue.
+   - Guard against re-flagging: only flag if current status is `'active'`.
 
-1. Implement `src/hooks/useWebSocket.ts`:
-   - Connects to `VITE_WS_URL` on mount
-   - Sends `join` event with `{ displayName, channel }` on connect
-   - Dispatches incoming events to the appropriate handler based on `type`
-   - Reconnects on close with exponential backoff: `[1s, 2s, 4s, 8s, 16s]` — stop at 5 attempts, then show "Connection lost" state
-   - Cleans up on unmount (closes socket, clears timers)
-   - Exposes: `sendMessage(channel, content)`, `switchChannel(channel)`, `connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error'`
+2. Create `src/jobs/newsFetcher.ts`:
+   - Install `rss-parser` as a new dependency. Justify: lightweight RSS parsing, no alternatives in-stack.
+   - Export `fetchNews()` (async function, callable manually from `POST /api/news/refresh`).
+   - Export `startNewsFetcher()` which calls `fetchNews()` once on startup (if internet available — wrap in try/catch, log error and continue if offline) then sets an interval to re-fetch every **30 minutes**.
+   - `fetchNews()` fetches RSS from:
+     - `https://www.prothomalo.com/feed/` (source: `'prothomalo'`)
+     - `https://www.thedailystar.net/rss.xml` (source: `'dailystar'`)
+     - `https://bdnews24.com/?feed=rss2` (source: `'bdnews24'`)
+   - For each article, call `upsertArticle()` from `src/db/news.ts` (upsert by `url UNIQUE`).
+   - Fetch failures per-source are caught and logged individually — one failed source does not abort the others.
+   - Log total articles fetched per run.
 
-2. Wire WebSocket events to Zustand stores:
-   - `message` → `useChatStore.addMessage`
-   - `post_created` → invalidate `['posts']` TanStack Query key
-   - `post_pinned` → invalidate `['posts']` TanStack Query key
-   - `checkin_flagged` → show a toast notification with the user's name
-   - `broadcast` → show a full-screen emergency banner (modal that must be dismissed)
-
-#### Chat
-
-3. Implement `src/pages/Chat.tsx`:
-   - Channel tabs: General · Emergency · Coordination · Medical
-   - Emergency channel tab has a red accent; unread badge shows count
-   - Message list: sender name, timestamp, content — messages in Emergency channel have a red left border accent
-   - Message input at bottom: text field + send button (or Enter key)
-   - Auto-scroll to newest message on arrival
-   - Shows `connectionStatus` indicator (green dot = connected, red = disconnected)
-   - Offline state: shows "Chat works on LAN only — connect to the node WiFi" if somehow disconnected
-
-4. Implement `src/components/Chat/MessageBubble.tsx` — renders a single message.
-
-5. Implement `src/components/Chat/ChannelTab.tsx` — renders a channel tab with unread badge.
-
-#### Noticeboard
-
-6. Implement `src/pages/Noticeboard.tsx`:
-   - Fetches posts via `GET /api/posts` (TanStack Query, `queryKey: ['posts']`)
-   - Pinned posts appear first with a pin icon
-   - Post cards: author, tag badge, timestamp, content
-   - Tag badge colour: Safety=danger red, Medical=amber, Food=green, Legal=blue, News=purple, General=muted
-   - "New Post" button → opens inline form: tag selector + content textarea + submit
-   - On submit: `POST /api/posts`; on success, TanStack Query auto-refetches
-   - Admin controls (visible only when `isAdmin()`): pin toggle button, delete button on each card
-   - Real-time: new posts and pin changes arrive via WebSocket and trigger query invalidation
-
-7. Implement `src/components/Noticeboard/PostCard.tsx`.
-
-8. Implement `src/components/Noticeboard/NewPostForm.tsx`.
+3. Call `startCheckinMonitor()` and `startNewsFetcher()` in `src/index.ts` after the server starts listening.
+4. Wire `POST /api/news/refresh` to call `fetchNews()` (replace the stub from Phase 4).
 
 ### Acceptance Criteria
 
-- [x] Sending a message in one browser tab appears in another tab within 100ms on LAN. — **requires manual LAN test with two browser tabs**
-- [x] Switching channels sends `switch_channel` event and shows correct message history.
-- [x] Unread badge increments on messages in non-active channels and clears on channel switch.
-- [x] Emergency channel messages have a red accent.
-- [x] WebSocket reconnects automatically after a simulated disconnect (kill and restart server).
-- [x] Noticeboard posts load from the API and render in correct pin-first order.
-- [x] New post form submits and the new post appears without a manual page refresh. — **requires running backend**
-- [x] Admin pin/delete controls are only visible when `isAdmin()` returns true.
-- [x] `broadcast` event shows a full-screen dismissable banner.
+- [ ] Server boots and both jobs start without errors.
+- [ ] After registering a check-in with `interval_hours: 0.016` (1 minute for testing), the monitor flags it within 2 minutes and a `checkin_flagged` WS event is emitted.
+- [ ] A flagged user is not flagged again on subsequent monitor ticks.
+- [ ] `POST /api/news/refresh` calls `fetchNews()` and `GET /api/news` returns populated articles (when internet is available).
+- [ ] A single offline RSS source does not crash the fetcher or block other sources.
+- [ ] Monitor ticks do not accumulate — slow DB calls do not cause tick pile-up (use `setInterval`, not recursive `setTimeout` chained from the previous call).
 
 ---
 
-## Phase 6 — Forms: Missing Persons & Check-in
+## Phase 7 — External Integrations: Twilio & Remote Sync
 
 ### Goals
-
-- Missing person registry: submit form, search, view cards, status display
-- Check-in system: register, "I'm safe" ping, status display
+Implement Twilio SMS (with graceful mock) and the outbound sync to the remote Railway server.
 
 ### Tasks
 
-#### Missing Persons
+1. Create `src/integrations/twilio.ts`:
+   - Install `twilio` SDK. Justify: official SDK, Twilio is spec-mandated.
+   - Export `sendSms(to: string, body: string): Promise<void>`.
+   - On import, check if all three Twilio env vars are present. If not, `log.warn('Twilio not configured — SMS alerts will be mocked')` and set a `MOCK_MODE` flag.
+   - In `MOCK_MODE`: `sendSms` logs `[MOCK SMS] to: {to} | body: {body}` and returns without error.
+   - In real mode: use the Twilio SDK to send. Catch errors, log them, and return without throwing (an SMS failure must never crash the job or the request).
 
-1. Implement `src/pages/MissingPersons.tsx`:
-   - Two tabs: Search · Submit Report
-   - Fetches all entries via `GET /api/missing` (TanStack Query)
+2. Wire `sendSms` into `src/jobs/checkinMonitor.ts` — replace the stub from Phase 6.
 
-2. **Search tab:**
-   - Text input bound to `GET /api/missing/search?q=` — debounce 300ms
-   - Results as cards: all submitted fields, status badge, photo if available
+3. Create `src/integrations/remoteSync.ts`:
+   - Export `syncToRemote(): Promise<void>`.
+   - If `config.REMOTE_SYNC_URL` is not set: log `Remote sync URL not configured — sync disabled` and return immediately.
+   - Query unsynced missing persons via `getUnsynced()` from `src/db/missing.ts`.
+   - Query unsynced map pins via `getUnsynced()` from `src/db/pins.ts`.
+   - If there is nothing to sync, return immediately.
+   - POST to `{REMOTE_SYNC_URL}/api/sync/missing` and `{REMOTE_SYNC_URL}/api/sync/pins`.
+   - On success: mark each synced entry's `synced` column to `1`.
+   - On failure: log the error and return without throwing. Data stays in the queue for the next attempt.
+   - Use `fetch` (native in Node 22). No additional HTTP client needed.
 
-3. **Submit Report tab — `src/components/MissingPersons/MissingPersonForm.tsx`:**
-   - Fields: Name (required), Age, Gender (select), Last Known Location (required), Description, Contact Name (required), Contact Phone (required), Photo (optional file upload — accept image/*)
-   - Validation: required fields checked before submit; phone number format check
-   - On submit: `POST /api/missing` with `multipart/form-data` if photo included, else `application/json`
-   - Success: show confirmation card with the submitted name; reset form
-   - Offline behaviour: show notice "This report will sync to the central server when connectivity returns"
-
-4. Status badge colours: Missing=danger red, Found=primary green, Unverified=muted
-
-5. Empty state: "No missing persons reported. If someone is missing, submit a report."
-
-#### Check-in
-
-6. Implement `src/pages/CheckIn.tsx`:
-   - Two states: **registered** (show ping button + time remaining) and **not registered** (show registration form)
-   - Determine registered state from `localStorage` — store `checkinId` after successful registration
-
-7. **Registration form — `src/components/CheckIn/CheckInForm.tsx`:**
-   - Fields: Display Name (pre-filled from `useAuthStore`, editable), Contact Phone (required), Interval (select: 2h · 4h · 6h · 12h)
-   - On submit: `POST /api/checkin/register`
-   - On success: store `checkinId` in `localStorage`; switch to registered view
-
-8. **Registered view — `src/components/CheckIn/CheckInStatus.tsx`:**
-   - Shows "You are registered. Tap 'I'm Safe' before [deadline]."
-   - Countdown timer: time remaining until next required check-in (derived from `lastCheckinAt + intervalHours * 3600`)
-   - "I'm Safe" button: calls `POST /api/checkin/ping`; on success, resets countdown
-   - If status is `unresponsive`: show red danger banner "You have been flagged as unresponsive"
+4. Export `startSyncJob()` from `remoteSync.ts` which calls `syncToRemote()` every **5 minutes** via `setInterval`. Call it from `src/index.ts`.
 
 ### Acceptance Criteria
 
-- [ ] Missing person form validates required fields before submission.
-- [ ] Submitted report appears in the search results without page refresh.
-- [ ] Photo upload is optional — form submits successfully without it.
-- [ ] Offline notice is shown on the submit form when `!isOnline`.
-- [ ] Check-in registration stores `checkinId` in `localStorage` and persists across refresh.
-- [ ] Countdown timer updates every second.
-- [ ] "I'm Safe" ping resets the countdown.
-- [ ] All three states (loading, error, empty) implemented for both pages.
+- [ ] Without Twilio env vars, server boots cleanly and logs the mock warning.
+- [ ] Check-in monitor triggering logs `[MOCK SMS]` with the correct phone number and message.
+- [ ] Without `REMOTE_SYNC_URL`, sync job starts, logs the disabled message, and does nothing.
+- [ ] With `REMOTE_SYNC_URL` set to a running local instance, unsynced entries are POSTed and marked `synced = 1`.
+- [ ] A failed remote sync does not crash the server or throw an unhandled rejection.
 
 ---
 
-## Phase 7 — Map: Offline Bangladesh Map with Pins
+## Phase 8 — Security: Admin Auth & Input Validation
 
 ### Goals
-
-- Render Bangladesh map tiles from the local PMTiles file via MapLibre GL JS
-- Display all saved pins from the backend
-- Allow users to drop new pins with a label, type, and optional description
+Wire JWT admin auth on all admin-protected routes. Harden all input validation.
 
 ### Tasks
 
-1. Install MapLibre GL JS and the PMTiles protocol client:
-   ```bash
-   npm install maplibre-gl pmtiles
-   ```
-
-2. Implement `src/pages/Map.tsx`:
-   - On mount, register the PMTiles protocol with MapLibre:
-     ```ts
-     import { Protocol } from 'pmtiles'
-     const protocol = new Protocol()
-     maplibregl.addProtocol('pmtiles', protocol.tile)
-     ```
-   - Initialise the map with source pointing to:
-     `pmtiles://${VITE_API_URL}/tiles/bangladesh.pmtiles`
-   - Centre on Bangladesh: `[90.3563, 23.6850]`, zoom 7
-   - Use the ProtoMaps dark basemap style or a minimal OSM-compatible style that works with the tile data
-
-3. Fetch pins via `GET /api/pins` (TanStack Query). Render each pin as a MapLibre marker with a coloured icon per `PinType`:
-   - shelter: green
-   - danger: red
-   - missing: amber
-   - medical: blue
-   - general: muted
-
-4. Clicking a pin opens a popup with: label, type, description, timestamp.
-
-5. **Drop Pin flow:**
-   - "Add Pin" button in the top-right corner of the map
-   - Clicking the button enters "placement mode" — cursor changes, next map click sets coordinates
-   - A small form appears (floating panel): Label (required), Type (select), Description (optional)
-   - On submit: `POST /api/pins`; marker appears on map immediately; query is invalidated
-
-6. Map must render with no internet after first load. The `.pmtiles` file is served by the local Hono server — no external tile server. Verify this: open map, go offline in DevTools, reload — tiles must still render from service worker cache or the local server.
-
-7. Implement `src/components/Map/PinMarker.tsx` and `src/components/Map/AddPinForm.tsx`.
+1. Install `jsonwebtoken`, `@types/jsonwebtoken`. Justify: JWT for admin session per spec.
+2. Create `src/middleware/adminAuth.ts`:
+   - Hono middleware that reads `Authorization: Bearer <token>` header.
+   - Verifies JWT using `config.ADMIN_PASSWORD` as the secret.
+   - On valid token: calls `next()`.
+   - On missing or invalid token: returns `401 { data: null, error: 'Unauthorised' }`.
+3. Apply `adminAuth` middleware to all admin-only route handlers:
+   - `PATCH /api/posts/:id/pin`
+   - `DELETE /api/posts/:id`
+   - `PATCH /api/missing/:id/status`
+   - `GET /api/checkin/status`
+   - `DELETE /api/pins/:id`
+   - `POST /api/admin/broadcast`
+   - `GET /api/admin/connections`
+4. Verify all input validation from Phases 3 and 4 is complete. Specifically:
+   - All required fields checked before DB insert — return `400` with field name if missing.
+   - All enum fields (`tag`, `channel`, `status`, `type`, `interval_hours`) validated against allowed values.
+   - `lat`/`lng` must be finite numbers within Bangladesh bounding box: lat `20.3–26.7`, lng `88.0–92.7`. Return `400` if out of bounds.
+   - `content` and `description` fields: strip leading/trailing whitespace, reject if empty after trim.
+5. SQL injection: confirm all queries use prepared statements (audit — no change should be needed if Phase 2 was followed correctly).
+6. Add `ADMIN_PASSWORD` startup warning if value is `changeme` (should already exist from Phase 1 — verify).
 
 ### Acceptance Criteria
 
-- [ ] Map renders Bangladesh tiles without any external network request when running on the local node.
-- [ ] All pins from `GET /api/pins` appear as coloured markers.
-- [ ] Clicking a marker shows a popup with pin details.
-- [ ] Adding a pin via the form POSTs to the backend and the marker appears immediately.
-- [ ] Map renders correctly on mobile (pinch-to-zoom works; add pin button is reachable).
-- [ ] Dropping a pin without a label shows a validation error.
-
-### AI Agent Guidance
-
-> MapLibre GL JS requires a canvas element and will error in SSR environments. This is not an issue since the app is client-side only. If you encounter `window is not defined` errors, confirm Vite is not doing SSR. The pmtiles protocol must be registered before the map is instantiated — order matters.
+- [ ] `PATCH /api/posts/:id/pin` without a token returns `401`.
+- [ ] `PATCH /api/posts/:id/pin` with a valid token from `POST /api/admin/login` returns `200`.
+- [ ] `PATCH /api/posts/:id/pin` with an expired or tampered token returns `401`.
+- [ ] `POST /api/pins` with `lat: 999` returns `400`.
+- [ ] `POST /api/posts` with `tag: 'invalid'` returns `400`.
+- [ ] `POST /api/posts` with `content: '   '` returns `400`.
+- [ ] No raw SQL string concatenation exists anywhere in the codebase (audit pass).
 
 ---
 
-## Phase 8 — Admin Panel
+## Phase 9 — Error Handling & Observability
 
 ### Goals
-
-- Admin login flow
-- Full admin panel: connected users, check-in statuses, post management, emergency broadcast
+Ensure no unhandled error crashes the server. Standardise all error responses. Improve logging.
 
 ### Tasks
 
-1. Implement `src/components/Admin/AdminLogin.tsx`:
-   - Password input form
-   - On submit: `POST /api/admin/login` with `{ password }`
-   - On success: store JWT in `useAuthStore.setAdminToken` (also persisted to `localStorage`)
-   - On failure: show "Incorrect password"
-   - The Admin route renders this component when `adminToken` is null
+1. Add a Hono `onError` global handler in `src/index.ts`:
+   - Logs the full error with stack trace at `log.error`.
+   - Returns `500 { data: null, error: 'Internal server error' }`.
+   - Never leaks the raw error message or stack to the client.
 
-2. Implement `src/pages/Admin.tsx` with four sections (use tabs or an accordion):
+2. Add a Hono `notFound` handler:
+   - Returns `404 { data: null, error: 'Not found' }`.
 
-   **Connected Users**
-   - Fetches `GET /api/admin/connections`
-   - Displays active WebSocket connection count
-   - Polling every 10 seconds (TanStack Query `refetchInterval: 10000`)
+3. Wrap all `setInterval` job callbacks in try/catch if not already done. A job tick that throws must not kill the interval — catch, log, continue.
 
-   **Check-in Status Board**
-   - Fetches `GET /api/checkin/status`
-   - Table: Name, Interval, Last Check-in, Status badge (Active/Unresponsive)
-   - Unresponsive rows highlighted with danger red background
-
-   **Post Management**
-   - Fetches `GET /api/posts` (same query as Noticeboard — share the query key `['posts']`)
-   - Each post: content preview, tag, author, pin toggle button, delete button
-   - Pin toggle: `PATCH /api/posts/:id/pin`
-   - Delete: `DELETE /api/posts/:id` with confirmation dialog
-
-   **Emergency Broadcast**
-   - Textarea: broadcast message content
-   - Send button: `POST /api/admin/broadcast`
-   - On success: show "Broadcast sent to all connected users"
-   - Note: the broadcast arrives at all clients via WebSocket and shows the full-screen banner (implemented in Phase 5)
-
-3. Implement `src/components/Admin/BroadcastBanner.tsx` — full-screen overlay with red background, message text, and a "Dismiss" button. Triggered by `broadcast` WebSocket event.
-
-4. Logout button: clears `adminToken` from store and `localStorage`, redirects to `/chat`.
-
-### Acceptance Criteria
-
-- [ ] Admin route shows login form when not authenticated.
-- [ ] Correct password grants access; wrong password shows an error.
-- [ ] Connection count updates every 10 seconds.
-- [ ] Check-in table shows all registered users with correct status badges.
-- [ ] Unresponsive rows are visually distinct.
-- [ ] Pin toggle and delete work on posts — changes reflect immediately.
-- [ ] Delete requires a confirmation dialog.
-- [ ] Broadcast message sends via `POST /api/admin/broadcast` and the full-screen banner appears on all connected clients.
-- [ ] Logout clears token and redirects.
-
----
-
-## Phase 9 — PWA & Offline Polish
-
-### Goals
-
-- Service worker pre-caches everything needed for full offline operation
-- PWA is installable on Android Chrome and iOS Safari
-- Offline badge and UX messaging are consistent and reassuring
-- Background Sync is registered for missing persons and map pins
-
-### Tasks
-
-1. Audit the Workbox `generateSW` config in `vite.config.ts`:
-   - Pre-cache: all static assets, all routes, all knowledge base `.md` files
-   - Runtime cache: `GET /api/news` (CacheFirst, 24h max age), `GET /api/posts` (NetworkFirst with fallback), map tile requests (CacheFirst)
-   - Ensure the `.pmtiles` tile requests are cached (may require custom runtime cache rule for the tile URL pattern)
-
-2. Implement `src/sw.ts` — custom service worker additions injected via vite-plugin-pwa:
-   - Register Background Sync tags `'sync-missing'` and `'sync-pins'` on `sync` event
-   - On sync event, call `POST /api/sync/missing` and `POST /api/sync/pins` with queued data from IndexedDB (or defer this to the backend's auto-sync job — coordinate with backend member)
-
-3. Verify PWA install prompt:
-   - On Android Chrome: "Add to Home Screen" banner should appear after first visit
-   - On iOS Safari: manual "Add to Home Screen" — ensure manifest is correct so it installs as standalone
-
-4. Implement `src/components/InstallPrompt.tsx`:
-   - Listens for `beforeinstallprompt` event
-   - Shows a subtle "Install Mukto Mesh" banner at the bottom
-   - On click: calls `prompt()` on the deferred event
-   - Dismissible; does not appear again after install or dismissal (store state in `localStorage`)
-
-5. Review all pages for offline UX completeness:
-   - Every page with network data must show a cached/stale state, not a blank error, when offline
-   - Action buttons that require internet (Refresh news, submit forms that sync) must be disabled with a clear "Offline" tooltip
-   - The offline badge must be visible on every page
-
-6. Test the full offline flow manually:
-   - Load the app with network
-   - Kill the network (DevTools → Network → Offline)
-   - Navigate to: Chat → Board → Info (all sections) → People → News → Map
-   - Every page must render without errors or blank states
-
-### Acceptance Criteria
-
-- [ ] All static assets and knowledge base content load with network fully offline.
-- [ ] News feed shows the last-cached articles offline.
-- [ ] Map tiles render offline (served by local server or cached).
-- [ ] PWA install prompt appears on Android Chrome.
-- [ ] App installs and launches in standalone mode (no browser chrome).
-- [ ] Background Sync tags are registered in the service worker.
-- [ ] Every page has a functional offline state — no blank screens.
-- [ ] Offline badge is visible on every page when `!isOnline`.
-
----
-
-## Phase 10 — Validation, Error Handling & Accessibility
-
-### Goals
-
-- All forms validate input before submission
-- All errors surface to the user with actionable messages — no "Something went wrong"
-- WCAG AA colour contrast on all text
-- Keyboard navigable throughout
-- Bangla font rendering verified on a real Android device
-
-### Tasks
-
-1. **Form validation audit:** Review every form (display name, new post, missing person, check-in registration, admin login, add pin, broadcast). Each must:
-   - Validate all required fields before calling the API
-   - Show inline error messages below each invalid field
-   - Disable the submit button while a request is in flight
-   - Re-enable and show the error message if the API returns an error
-
-2. **Global error boundary:** Implement `src/components/ErrorBoundary.tsx` — wraps the entire app. If a component throws, renders a friendly "Something unexpected happened — reload the page" UI instead of a blank screen.
-
-3. **Toast notifications:** Implement a lightweight toast system (can use shadcn/ui `Sonner` or a hand-rolled approach):
-   - Success toasts: green, auto-dismiss 3s
-   - Error toasts: red, auto-dismiss 5s
-   - Use for: post submitted, pin added, check-in successful, broadcast sent, flagged user alert
-
-4. **Accessibility audit:**
-   - All interactive elements have `aria-label` or visible text
-   - Focus is managed correctly on modal open/close (trap focus inside modal, return focus on close)
-   - Tab order is logical on every page
-   - All icons used as interactive elements have `aria-label`
-   - Colour contrast: verify `var(--color-text)` on `var(--color-bg)` passes WCAG AA (4.5:1 minimum)
-
-5. **Bangla font rendering:** Verify the system font stack renders Bangla correctly:
-   - Test on a real Android device (not just Chrome DevTools emulation)
-   - The system font stack should include: `'Noto Sans Bengali', 'Hind Siliguri', sans-serif`
-   - If system fonts are insufficient, evaluate including a single Bangla web font as a last resort (requires a trade-off discussion — it breaks the no-web-font rule)
-
-6. **Error message i18n:** Ensure all user-facing error messages have Bangla equivalents and the correct language renders based on `useLanguageStore`.
-
-### Acceptance Criteria
-
-- [ ] Every required field shows an inline error if submitted empty.
-- [ ] Submit buttons are disabled during in-flight requests.
-- [ ] API errors surface as specific toast messages, never generic ones.
-- [ ] ErrorBoundary catches render errors and shows a recovery UI.
-- [ ] All interactive elements are keyboard-reachable via Tab.
-- [ ] Focus is trapped correctly in all modals.
-- [ ] Colour contrast passes WCAG AA on all text.
-- [ ] Bangla text renders correctly on a real Android device.
-
----
-
-## Phase 11 — Performance Optimization
-
-### Rules
-
-Only optimize what is **measured and proven** to be a bottleneck. Capture a baseline before changing anything.
-
-### Tasks
-
-1. **Bundle size audit:**
-   ```bash
-   npm run build
-   npx vite-bundle-visualizer
-   ```
-   Target: total bundle < 500KB gzipped. Identify the largest chunks.
-
-2. **MapLibre GL JS** is the expected largest dependency (~300KB). Verify it is code-split and only loaded on the `/map` route via `React.lazy` + `Suspense`.
-
-3. **Route-level code splitting:** All pages must be lazy-loaded:
+4. Add process-level error handlers in `src/index.ts`:
    ```ts
-   const Chat = React.lazy(() => import('./pages/Chat'))
+   process.on('uncaughtException', (err) => { log.error('Uncaught exception', err); });
+   process.on('unhandledRejection', (reason) => { log.error('Unhandled rejection', reason); });
    ```
-   Wrap all lazy routes in `<Suspense fallback={<PageSkeleton />}>`.
+   These log and keep the server alive rather than crashing.
 
-4. **Knowledge base:** `.md` file imports via `?raw` are fine — they are strings, not parsed at runtime. Verify they are pre-cached by Workbox and not re-fetched.
+5. Ensure every async route handler has a try/catch or is wrapped with Hono's built-in async error propagation. Confirm no `async` handler exists without error forwarding.
 
-5. **Re-render audit:** Use React DevTools Profiler on the Chat page under message load. If any parent re-renders on every message, memoize the message list with `React.memo` or `useMemo`.
-
-6. **Image optimization:** Missing person photos — if displayed in the registry, ensure they are constrained to a max display size (`max-width: 120px`) and not rendered at full upload resolution.
-
-7. Document before/after for any optimization made (bundle size, render count, load time).
+6. Log enrichment: each request logs `[METHOD] [path] [status] [duration ms]`. Implement via Hono middleware in `src/index.ts`.
 
 ### Acceptance Criteria
 
-- [ ] Initial page load is under 2 seconds on a LAN connection (measure with DevTools → Network → Fast 3G as a proxy).
-- [ ] MapLibre is only loaded on the `/map` route.
-- [ ] All routes are code-split and lazy-loaded.
-- [ ] No optimization is made without a before/after measurement documented.
+- [ ] A deliberate `throw new Error('test')` inside a route handler returns `500` with the generic message, not the raw error.
+- [ ] The server does not crash after any single bad request or runtime error.
+- [ ] Every request generates a log line with method, path, status, and duration.
+- [ ] Job intervals continue running after a tick throws an error.
+- [ ] `process.on('uncaughtException')` is registered before the server starts listening.
 
 ---
 
-## Phase 12 — Refactoring & Cleanup
+## Out of Scope (This Version)
 
-### Tasks
-
-1. Search codebase for all `// [STUB]`, `// TODO`, `// FIXME`, `// temporary` comments. Resolve or convert to a tracked GitHub issue.
-2. Remove all unused imports, unused components, and dead code.
-3. Consolidate any duplicated fetch logic into shared hooks.
-4. Verify every page still has loading, error, and empty states after refactoring.
-5. Run ESLint and Prettier — zero warnings allowed.
-6. Run TypeScript strict check — zero errors allowed.
-7. Do a final manual test of the full offline flow (Phase 9 acceptance criteria).
-
-### Acceptance Criteria
-
-- [ ] Zero `// STUB`, `// TODO`, or `// FIXME` comments remain unresolved.
-- [ ] ESLint passes with zero warnings.
-- [ ] TypeScript strict mode passes with zero errors.
-- [ ] Full offline flow works end-to-end (Phase 9 criteria still pass).
-- [ ] No unused dependencies remain in `package.json`.
+- Full RBAC / multiple admin roles
+- P2P mesh networking across separate WiFi networks
+- End-to-end encryption for chat
+- Android APK / Capacitor wrapper
+- Automated test suite (manual testing only — 72h constraint)
+- CI/CD pipeline
+- Damage reporting with photo upload
+- Federated node sync (nodes knowing about each other)
+- Single executable distribution via `pkg` or Bun compile
+- Wikipedia / general survival guides
 
 ---
 
@@ -1084,26 +703,14 @@ Only optimize what is **measured and proven** to be a bottleneck. Capture a base
 
 | Item | Priority | Notes |
 |---|---|---|
-| End-to-end encryption for chat messages | High | Post-hackathon — requires key exchange design |
-| Bluetooth/WiFi-Direct relay for multi-hop LAN | High | Requires native APIs or Capacitor |
-| Android APK via Capacitor | Medium | Wrap PWA for Play Store distribution |
-| Multi-language support beyond Bangla and English | Low | i18n library would be needed |
-| Damage reporting with geotagged photo upload | Medium | Requires map integration extension |
+| E2E encryption for chat | High | Implement post-hackathon before any public deployment |
+| P2P mesh across hotspots | High | LoRa or Bluetooth relay |
+| Automated test suite | Medium | At minimum: unit tests for business logic and DB query functions |
+| Single executable (Bun compile) | Medium | TBD-03 — eliminates Node.js requirement for node operators |
+| Full RBAC | Low | Multiple admin roles, moderators |
 
 ---
 
-## Out of Scope (This Version)
+*Read this plan fully before writing any code. Complete each phase's acceptance criteria before starting the next. If this is a coding agent: do not invent endpoints, types, or table columns not listed here — the frontend is coded against these exact contracts.*
 
-The following are explicitly not part of this frontend implementation. Do not build these unless this list is updated.
-
-- RSS feed fetching or scheduling (backend only)
-- Check-in SMS alerts via Twilio (backend only)
-- P2P mesh networking across separate WiFi networks
-- Wikipedia or general survival guide content
-- Any AI/LLM features
-- Deployment pipeline configuration (handled by the backend member)
-- Automated test suite (explicit 72h sprint trade-off)
-
----
-
-*This plan is the single source of truth for the Mukto Mesh frontend. Read each phase in full before starting it. Complete all acceptance criteria before moving to the next phase. Last updated: 2026-07-27.*
+*Last updated: 2026-07-27*
