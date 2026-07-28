@@ -2,6 +2,8 @@ import { Hono } from 'hono'
 import { getDB } from '../db/index.js'
 import { v4 as uuid } from 'uuid'
 
+const VALID_TAGS = ['safety', 'medical', 'food', 'legal', 'news', 'general']
+
 const posts = new Hono()
 
 posts.get('/', (c) => {
@@ -19,6 +21,10 @@ posts.post('/', async (c) => {
 
   if (!display_name || !tag || !content) {
     return c.json({ data: null, error: 'Missing required fields' }, 400)
+  }
+
+  if (!VALID_TAGS.includes(tag)) {
+    return c.json({ data: null, error: `Invalid tag. Must be one of: ${VALID_TAGS.join(', ')}` }, 400)
   }
 
   const id = uuid()

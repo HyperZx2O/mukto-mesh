@@ -49,6 +49,11 @@ app.get('/health', (c) =>
   c.json({ data: { status: 'ok', timestamp: new Date().toISOString() }, error: null })
 )
 
+// 404
+app.notFound((c) =>
+  c.json({ data: null, error: 'Not found' }, 404)
+)
+
 serve({ fetch: app.fetch, port: config.PORT }, () => {
   log.info(`Server running on http://localhost:${config.PORT}`)
   log.info(`Share http://[your-local-ip]:${config.PORT} with your network`)
