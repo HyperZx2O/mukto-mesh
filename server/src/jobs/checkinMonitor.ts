@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import { getDB } from '../db/index.js'
 import { broadcastAll } from '../ws/chat.js'
 import { log } from '../logger.js'
+import { sendSms } from '../integrations/twilio.js'
 
 const CHECK_INTERVAL_MS = 60 * 1000
 
@@ -29,6 +30,9 @@ export function startCheckinMonitor() {
             type: 'checkin_flagged',
             displayName: entry.display_name,
           })
+
+          sendSms(entry.contact_phone,
+            `Alert: ${entry.display_name} has not checked in and is unresponsive. Last check-in: ${new Date(entry.last_checkin_at).toLocaleString()}.`)
         }
       }
     } catch (e) {

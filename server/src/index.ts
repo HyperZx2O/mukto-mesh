@@ -21,6 +21,7 @@ import messages from './routes/messages.js'
 // Jobs
 import { startCheckinMonitor } from './jobs/checkinMonitor.js'
 import { startNewsFetcher } from './jobs/newsFetcher.js'
+import { startSyncJob } from './integrations/remoteSync.js'
 
 const app = new Hono()
 
@@ -44,6 +45,7 @@ app.route('/api/messages', messages)
 // Start background jobs
 startCheckinMonitor()
 startNewsFetcher()
+startSyncJob()
 
 // Health check
 app.get('/health', (c) =>
