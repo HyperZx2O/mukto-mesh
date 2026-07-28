@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { getDB } from '../db/index.js'
+import { config } from '../config.js'
 
 const admin = new Hono()
 
@@ -7,7 +7,7 @@ const admin = new Hono()
 
 admin.post('/login', async (c) => {
   const { password } = await c.req.json()
-  if (password !== process.env.ADMIN_PASSWORD) {
+  if (password !== config.ADMIN_PASSWORD) {
     return c.json({ data: null, error: 'Unauthorised' }, 401)
   }
   // TODO: Return JWT token

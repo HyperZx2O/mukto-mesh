@@ -2,6 +2,8 @@ import { Hono } from 'hono'
 import { getDB } from '../db/index.js'
 import { v4 as uuid } from 'uuid'
 
+const VALID_INTERVALS = [2, 4, 6, 12]
+
 const checkin = new Hono()
 
 checkin.post('/register', async (c) => {
@@ -10,6 +12,10 @@ checkin.post('/register', async (c) => {
 
   if (!display_name || !contact_phone || !interval_hours) {
     return c.json({ data: null, error: 'Missing required fields' }, 400)
+  }
+
+  if (!VALID_INTERVALS.includes(interval_hours)) {
+    return c.json({ data: null, error: `Invalid interval_hours. Must be one of: ${VALID_INTERVALS.join(', ')}` }, 400)
   }
 
   const id = uuid()

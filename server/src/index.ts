@@ -14,6 +14,7 @@ import news from './routes/news.js'
 import pins from './routes/pins.js'
 import sync from './routes/sync.js'
 import admin from './routes/admin.js'
+import messages from './routes/messages.js'
 
 // Jobs
 import { startCheckinMonitor } from './jobs/checkinMonitor.js'
@@ -36,6 +37,7 @@ app.route('/api/news', news)
 app.route('/api/pins', pins)
 app.route('/api/sync', sync)
 app.route('/api/admin', admin)
+app.route('/api/messages', messages)
 
 // WebSocket — wired in chat.ts
 // TODO: import and attach WS handler

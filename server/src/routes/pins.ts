@@ -2,6 +2,8 @@ import { Hono } from 'hono'
 import { getDB } from '../db/index.js'
 import { v4 as uuid } from 'uuid'
 
+const VALID_PIN_TYPES = ['shelter', 'danger', 'missing', 'medical', 'general']
+
 const pins = new Hono()
 
 pins.get('/', (c) => {
@@ -16,6 +18,10 @@ pins.post('/', async (c) => {
 
   if (!label || !type || lat === undefined || lng === undefined) {
     return c.json({ data: null, error: 'Missing required fields' }, 400)
+  }
+
+  if (!VALID_PIN_TYPES.includes(type)) {
+    return c.json({ data: null, error: `Invalid type. Must be one of: ${VALID_PIN_TYPES.join(', ')}` }, 400)
   }
 
   const id = uuid()
