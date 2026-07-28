@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
-import { getDB } from '../db/index.js'
-import { v4 as uuid } from 'uuid'
+import { getAllPins, createPin, deletePin } from '../db/pins.js'
 import { adminAuth } from '../middleware/adminAuth.js'
 
 const VALID_PIN_TYPES = ['shelter', 'danger', 'missing', 'medical', 'general']
@@ -8,13 +7,11 @@ const VALID_PIN_TYPES = ['shelter', 'danger', 'missing', 'medical', 'general']
 const pins = new Hono()
 
 pins.get('/', (c) => {
-  const db = getDB()
-  const rows = db.prepare('SELECT * FROM map_pins ORDER BY created_at DESC').all()
+  const rows = getAllPins()
   return c.json({ data: rows, error: null })
 })
 
 pins.post('/', async (c) => {
-  const db = getDB()
   const { label, type, lat, lng, description, user_id } = await c.req.json()
 
   if (!label || !type || lat === undefined || lng === undefined) {
@@ -30,22 +27,13 @@ pins.post('/', async (c) => {
     return c.json({ data: null, error: 'Coordinates must be within Bangladesh (lat 20.3–26.7, lng 88.0–92.7)' }, 400)
   }
 
-  const id = uuid()
-  const now = Date.now()
-
-  db.prepare(`
-    INSERT INTO map_pins (id, label, type, lat, lng, description, user_id, synced, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
-  `).run(id, label, type, lat, lng, description || null, user_id || null, now)
-
-  const pin = db.prepare('SELECT * FROM map_pins WHERE id = ?').get(id)
+  const pin = createPin({ label, type, lat, lng, description, user_id })
   return c.json({ data: pin, error: null }, 201)
 })
 
 pins.delete('/:id', adminAuth, (c) => {
-  const db = getDB()
   const id = c.req.param('id')
-  db.prepare('DELETE FROM map_pins WHERE id = ?').run(id)
+  deletePin(id)
   return c.json({ data: { deleted: true }, error: null })
 })
 

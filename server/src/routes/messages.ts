@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { getDB } from '../db/index.js'
+import { getMessages } from '../db/messages.js'
 
 const VALID_CHANNELS = ['general', 'emergency', 'coordination', 'medical']
 
@@ -12,11 +12,7 @@ messages.get('/', (c) => {
     return c.json({ data: null, error: `Invalid channel. Must be one of: ${VALID_CHANNELS.join(', ')}` }, 400)
   }
 
-  const db = getDB()
-  const rows = db.prepare(
-    'SELECT * FROM messages WHERE channel = ? ORDER BY created_at DESC LIMIT 100'
-  ).all(channel)
-
+  const rows = getMessages(channel, 100)
   return c.json({ data: rows, error: null })
 })
 

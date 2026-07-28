@@ -1,7 +1,6 @@
 import Parser from 'rss-parser'
-import { getDB } from '../db/index.js'
-import { v4 as uuid } from 'uuid'
 import { log } from '../logger.js'
+import { upsertArticle } from '../db/news.js'
 
 const parser = new Parser()
 
@@ -14,22 +13,16 @@ const SOURCES = [
 const FETCH_INTERVAL_MS = 30 * 60 * 1000
 
 export async function fetchNews() {
-  const db = getDB()
   for (const source of SOURCES) {
     try {
       const feed = await parser.parseURL(source.url)
-      const insert = db.prepare(`
-        INSERT OR IGNORE INTO news_articles (id, title, source, url, content, published_at, fetched_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `)
-      const now = Date.now()
       for (const item of feed.items.slice(0, 20)) {
         if (!item.link || !item.title) continue
-        insert.run(
-          uuid(), item.title, source.name, item.link,
-          item.contentSnippet || item.summary || null,
-          item.pubDate ? new Date(item.pubDate).getTime() : null, now,
-        )
+        upsertArticle({
+          title: item.title, source: source.name, url: item.link,
+          content: item.contentSnippet || item.summary || null,
+          published_at: item.pubDate ? new Date(item.pubDate).getTime() : null,
+        })
       }
       log.info(`Fetched ${feed.items.length} articles from ${source.name}`)
     } catch (e) {

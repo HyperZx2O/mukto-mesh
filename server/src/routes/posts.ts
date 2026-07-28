@@ -1,23 +1,19 @@
 import { Hono } from 'hono'
-import { getDB } from '../db/index.js'
-import { v4 as uuid } from 'uuid'
+import { getAllPosts, getPostById, createPost as dbCreatePost, setPinned, deletePost } from '../db/posts.js'
 import { broadcastToAll } from '../ws/chat.js'
 import { adminAuth } from '../middleware/adminAuth.js'
+import { WsEvent } from '../types.js'
 
 const VALID_TAGS = ['safety', 'medical', 'food', 'legal', 'news', 'general']
 
 const posts = new Hono()
 
 posts.get('/', (c) => {
-  const db = getDB()
-  const rows = db.prepare(`
-    SELECT * FROM posts ORDER BY pinned DESC, created_at DESC
-  `).all()
+  const rows = getAllPosts()
   return c.json({ data: rows, error: null })
 })
 
 posts.post('/', async (c) => {
-  const db = getDB()
   const body = await c.req.json()
   const { display_name, user_id, tag, content } = body
 
@@ -34,36 +30,26 @@ posts.post('/', async (c) => {
     return c.json({ data: null, error: 'content cannot be empty after trimming whitespace' }, 400)
   }
 
-  const id = uuid()
-  const now = Date.now()
-
-  db.prepare(`
-    INSERT INTO posts (id, user_id, display_name, tag, content, pinned, created_at)
-    VALUES (?, ?, ?, ?, ?, 0, ?)
-  `).run(id, user_id || 'anonymous', display_name, tag, trimmed, now)
-
-  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(id) as any
-  broadcastToAll({ type: 'post_created', post })
+  const post = dbCreatePost({ display_name, user_id, tag, content: trimmed })
+  broadcastToAll({ type: WsEvent.POST_CREATED, post })
   return c.json({ data: post, error: null }, 201)
 })
 
 posts.patch('/:id/pin', adminAuth, (c) => {
-  const db = getDB()
   const id = c.req.param('id')
-  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(id) as any
+  const post = getPostById(id) as any
 
   if (!post) return c.json({ data: null, error: 'Post not found' }, 404)
 
   const newPinned = post.pinned ? 0 : 1
-  db.prepare('UPDATE posts SET pinned = ? WHERE id = ?').run(newPinned, id)
-  broadcastToAll({ type: 'post_pinned', id, pinned: !!newPinned })
+  setPinned(id, newPinned)
+  broadcastToAll({ type: WsEvent.POST_PINNED, id, pinned: !!newPinned })
   return c.json({ data: { id, pinned: !!newPinned }, error: null })
 })
 
 posts.delete('/:id', adminAuth, (c) => {
-  const db = getDB()
   const id = c.req.param('id')
-  db.prepare('DELETE FROM posts WHERE id = ?').run(id)
+  deletePost(id)
   return c.json({ data: { deleted: true }, error: null })
 })
 

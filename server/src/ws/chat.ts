@@ -1,5 +1,6 @@
 import crypto from 'crypto'
-import { getDB } from '../db/index.js'
+import { createMessage, getLastMessages } from '../db/messages.js'
+import { WsEvent } from '../types.js'
 
 export const CHANNELS = ['general', 'emergency', 'coordination', 'medical'] as const
 export type Channel = (typeof CHANNELS)[number]
@@ -54,47 +55,35 @@ export function createWSHandler() {
       if (!client) return
 
       switch (msg.type) {
-        case 'join': {
+        case WsEvent.JOIN: {
           client.displayName = msg.displayName || 'Anonymous'
           client.channel = (CHANNELS.includes(msg.channel) ? msg.channel : 'general') as Channel
 
-          // Send last 50 messages for the channel
-          const db = getDB()
-          const messages = db.prepare(
-            'SELECT * FROM messages WHERE channel = ? ORDER BY created_at DESC LIMIT 50'
-          ).all(client.channel).reverse()
-
+          const messages = getLastMessages(client.channel, 50)
           send(ws, { type: 'join_ack', channel: client.channel, messages })
           break
         }
 
-        case 'message': {
+        case WsEvent.MESSAGE: {
           if (!msg.content || !CHANNELS.includes(msg.channel)) return
 
-          const db = getDB()
-          const id = crypto.randomUUID()
-          const now = Date.now()
-
-          db.prepare(
-            'INSERT INTO messages (id, user_id, display_name, channel, content, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-          ).run(id, client.id, client.displayName, msg.channel, msg.content, now)
+          const { id, createdAt } = createMessage({
+            user_id: client.id, display_name: client.displayName,
+            channel: msg.channel, content: msg.content,
+          })
 
           broadcastToChannel(msg.channel as Channel, {
-            type: 'message', id, displayName: client.displayName,
-            channel: msg.channel, content: msg.content, createdAt: now,
+            type: WsEvent.WS_MESSAGE, id, displayName: client.displayName,
+            channel: msg.channel, content: msg.content, createdAt,
           })
           break
         }
 
-        case 'switch_channel': {
+        case WsEvent.SWITCH_CHANNEL: {
           if (!CHANNELS.includes(msg.channel)) return
           client.channel = msg.channel as Channel
 
-          const db = getDB()
-          const messages = db.prepare(
-            'SELECT * FROM messages WHERE channel = ? ORDER BY created_at DESC LIMIT 50'
-          ).all(client.channel).reverse()
-
+          const messages = getLastMessages(client.channel, 50)
           send(ws, { type: 'join_ack', channel: client.channel, messages })
           break
         }

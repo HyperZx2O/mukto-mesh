@@ -1,6 +1,7 @@
 import { config } from '../config.js'
 import { log } from '../logger.js'
-import { getDB } from '../db/index.js'
+import { getUnsyncedMissing, markMissingSynced } from '../db/missing.js'
+import { getUnsyncedPins, markPinsSynced } from '../db/pins.js'
 
 const SYNC_INTERVAL_MS = 5 * 60 * 1000
 
@@ -10,9 +11,8 @@ export async function syncToRemote(): Promise<void> {
     return
   }
 
-  const db = getDB()
-  const unsyncedMissing = db.prepare("SELECT * FROM missing_persons WHERE synced = 0").all() as any[]
-  const unsyncedPins = db.prepare("SELECT * FROM map_pins WHERE synced = 0").all() as any[]
+  const unsyncedMissing = getUnsyncedMissing() as any[]
+  const unsyncedPins = getUnsyncedPins() as any[]
 
   if (unsyncedMissing.length === 0 && unsyncedPins.length === 0) return
 
@@ -27,7 +27,7 @@ export async function syncToRemote(): Promise<void> {
       })
       if (res.ok) {
         const ids = unsyncedMissing.map((e: any) => e.id)
-        db.prepare(`UPDATE missing_persons SET synced = 1 WHERE id IN (${ids.map(() => '?').join(',')})`).run(...ids)
+        markMissingSynced(ids)
         log.info(`Synced ${ids.length} missing persons`)
       } else {
         log.warn(`Sync missing failed: ${res.status}`)
@@ -46,7 +46,7 @@ export async function syncToRemote(): Promise<void> {
       })
       if (res.ok) {
         const ids = unsyncedPins.map((p: any) => p.id)
-        db.prepare(`UPDATE map_pins SET synced = 1 WHERE id IN (${ids.map(() => '?').join(',')})`).run(...ids)
+        markPinsSynced(ids)
         log.info(`Synced ${ids.length} map pins`)
       } else {
         log.warn(`Sync pins failed: ${res.status}`)
