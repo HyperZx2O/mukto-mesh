@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { getDB } from '../db/index.js'
 import { v4 as uuid } from 'uuid'
 import { broadcastToAll } from '../ws/chat.js'
+import { adminAuth } from '../middleware/adminAuth.js'
 
 const VALID_TAGS = ['safety', 'medical', 'food', 'legal', 'news', 'general']
 
@@ -28,21 +29,25 @@ posts.post('/', async (c) => {
     return c.json({ data: null, error: `Invalid tag. Must be one of: ${VALID_TAGS.join(', ')}` }, 400)
   }
 
+  const trimmed = content.trim()
+  if (!trimmed) {
+    return c.json({ data: null, error: 'content cannot be empty after trimming whitespace' }, 400)
+  }
+
   const id = uuid()
   const now = Date.now()
 
   db.prepare(`
     INSERT INTO posts (id, user_id, display_name, tag, content, pinned, created_at)
     VALUES (?, ?, ?, ?, ?, 0, ?)
-  `).run(id, user_id || 'anonymous', display_name, tag, content, now)
+  `).run(id, user_id || 'anonymous', display_name, tag, trimmed, now)
 
   const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(id) as any
   broadcastToAll({ type: 'post_created', post })
   return c.json({ data: post, error: null }, 201)
 })
 
-posts.patch('/:id/pin', (c) => {
-  // TODO: admin auth middleware
+posts.patch('/:id/pin', adminAuth, (c) => {
   const db = getDB()
   const id = c.req.param('id')
   const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(id) as any
@@ -55,8 +60,7 @@ posts.patch('/:id/pin', (c) => {
   return c.json({ data: { id, pinned: !!newPinned }, error: null })
 })
 
-posts.delete('/:id', (c) => {
-  // TODO: admin auth middleware
+posts.delete('/:id', adminAuth, (c) => {
   const db = getDB()
   const id = c.req.param('id')
   db.prepare('DELETE FROM posts WHERE id = ?').run(id)

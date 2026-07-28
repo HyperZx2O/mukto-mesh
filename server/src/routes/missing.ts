@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getDB } from '../db/index.js'
 import { v4 as uuid } from 'uuid'
+import { adminAuth } from '../middleware/adminAuth.js'
 
 const missing = new Hono()
 
@@ -43,8 +44,7 @@ missing.post('/', async (c) => {
   return c.json({ data: entry, error: null }, 201)
 })
 
-missing.patch('/:id/status', async (c) => {
-  // TODO: admin auth middleware
+missing.patch('/:id/status', adminAuth, async (c) => {
   const db = getDB()
   const id = c.req.param('id')
   const { status } = await c.req.json()

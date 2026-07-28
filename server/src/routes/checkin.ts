@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getDB } from '../db/index.js'
 import { v4 as uuid } from 'uuid'
+import { adminAuth } from '../middleware/adminAuth.js'
 
 const VALID_INTERVALS = [2, 4, 6, 12]
 
@@ -42,8 +43,7 @@ checkin.post('/ping', async (c) => {
   return c.json({ data: { ok: true }, error: null })
 })
 
-checkin.get('/status', (c) => {
-  // TODO: admin auth middleware
+checkin.get('/status', adminAuth, (c) => {
   const db = getDB()
   const rows = db.prepare('SELECT * FROM checkins ORDER BY created_at DESC').all()
   return c.json({ data: rows, error: null })

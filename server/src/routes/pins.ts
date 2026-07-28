@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getDB } from '../db/index.js'
 import { v4 as uuid } from 'uuid'
+import { adminAuth } from '../middleware/adminAuth.js'
 
 const VALID_PIN_TYPES = ['shelter', 'danger', 'missing', 'medical', 'general']
 
@@ -24,6 +25,11 @@ pins.post('/', async (c) => {
     return c.json({ data: null, error: `Invalid type. Must be one of: ${VALID_PIN_TYPES.join(', ')}` }, 400)
   }
 
+  if (typeof lat !== 'number' || typeof lng !== 'number' || !isFinite(lat) || !isFinite(lng) ||
+      lat < 20.3 || lat > 26.7 || lng < 88.0 || lng > 92.7) {
+    return c.json({ data: null, error: 'Coordinates must be within Bangladesh (lat 20.3–26.7, lng 88.0–92.7)' }, 400)
+  }
+
   const id = uuid()
   const now = Date.now()
 
@@ -36,8 +42,7 @@ pins.post('/', async (c) => {
   return c.json({ data: pin, error: null }, 201)
 })
 
-pins.delete('/:id', (c) => {
-  // TODO: admin auth middleware
+pins.delete('/:id', adminAuth, (c) => {
   const db = getDB()
   const id = c.req.param('id')
   db.prepare('DELETE FROM map_pins WHERE id = ?').run(id)
