@@ -1,14 +1,11 @@
 import { Hono } from 'hono'
-import { getDB } from '../db/index.js'
+import { getAllNews } from '../db/news.js'
 import { fetchNews } from '../jobs/newsFetcher.js'
 
 const news = new Hono()
 
 news.get('/', (c) => {
-  const db = getDB()
-  const rows = db.prepare(`
-    SELECT * FROM news_articles ORDER BY fetched_at DESC LIMIT 50
-  `).all()
+  const rows = getAllNews()
   return c.json({ data: rows, error: null })
 })
 
