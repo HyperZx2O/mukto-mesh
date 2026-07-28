@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { config } from '../config.js'
+import { getConnectionCount, broadcastToAll } from '../ws/chat.js'
 
 const admin = new Hono()
 
@@ -15,14 +16,12 @@ admin.post('/login', async (c) => {
 })
 
 admin.get('/connections', (c) => {
-  // TODO: Return active WS connection count from chat.ts
-  return c.json({ data: { count: 0 }, error: null })
+  return c.json({ data: { count: getConnectionCount() }, error: null })
 })
 
 admin.post('/broadcast', async (c) => {
   const { message } = await c.req.json()
-  // TODO: Broadcast to all WS clients
-  console.log(`[BROADCAST] ${message}`)
+  broadcastToAll({ type: 'broadcast', message, createdAt: Date.now() })
   return c.json({ data: { ok: true }, error: null })
 })
 
