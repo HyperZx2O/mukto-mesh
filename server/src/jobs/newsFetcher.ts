@@ -40,6 +40,6 @@ export async function fetchNews() {
 
 export function startNewsFetcher() {
   fetchNews()
-  setInterval(fetchNews, FETCH_INTERVAL_MS)
+  setInterval(() => { try { fetchNews() } catch (e) { log.error(`News fetcher tick failed: ${e}`) } }, FETCH_INTERVAL_MS)
   log.info('News fetcher started (30 min interval)')
 }

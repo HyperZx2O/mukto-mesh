@@ -59,6 +59,6 @@ export async function syncToRemote(): Promise<void> {
 
 export function startSyncJob() {
   syncToRemote()
-  setInterval(syncToRemote, SYNC_INTERVAL_MS)
+  setInterval(() => { try { syncToRemote() } catch (e) { log.error(`Sync tick failed: ${e}`) } }, SYNC_INTERVAL_MS)
   log.info('Remote sync job started (5 min interval)')
 }
