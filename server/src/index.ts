@@ -1,8 +1,9 @@
-import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { config } from './config.js'
+import { log } from './logger.js'
 import { initDB } from './db/index.js'
 
 // Routes
@@ -19,7 +20,6 @@ import { startCheckinMonitor } from './jobs/checkinMonitor.js'
 import { fetchNews } from './jobs/newsFetcher.js'
 
 const app = new Hono()
-const PORT = Number(process.env.PORT) || 3000
 
 // Middleware
 app.use('*', logger())
@@ -45,9 +45,11 @@ startCheckinMonitor()
 fetchNews()
 
 // Health check
-app.get('/health', (c) => c.json({ status: 'ok', offline: true }))
+app.get('/health', (c) =>
+  c.json({ data: { status: 'ok', timestamp: new Date().toISOString() }, error: null })
+)
 
-serve({ fetch: app.fetch, port: PORT }, () => {
-  console.log(`[Mukto Mesh] Server running on http://localhost:${PORT}`)
-  console.log(`[Mukto Mesh] Share http://[your-local-ip]:${PORT} with your network`)
+serve({ fetch: app.fetch, port: config.PORT }, () => {
+  log.info(`Server running on http://localhost:${config.PORT}`)
+  log.info(`Share http://[your-local-ip]:${config.PORT} with your network`)
 })
