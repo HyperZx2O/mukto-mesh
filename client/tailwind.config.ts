@@ -52,10 +52,10 @@ export default {
         'tag-news':    token('color-tag-news'),
       },
       fontFamily: {
-        display: ['Noto Serif Bengali', 'Noto Sans Bengali', 'Georgia', 'serif'],
-        body:    ['Noto Sans Bengali', 'Hind Siliguri', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Inter', 'Noto Sans Bengali', 'system-ui', '-apple-system', 'sans-serif'],
+        body:    ['Inter', 'Noto Sans Bengali', 'system-ui', '-apple-system', 'sans-serif'],
         mono:    ['JetBrains Mono', 'Fira Code', 'Cascadia Code', 'monospace'],
-        sans:    ['Noto Sans Bengali', 'Hind Siliguri', 'system-ui', '-apple-system', 'sans-serif'],
+        sans:    ['Inter', 'Noto Sans Bengali', 'system-ui', '-apple-system', 'sans-serif'],
       },
       fontSize: {
         display:  token('text-display'),
@@ -89,17 +89,15 @@ export default {
         '18':  '4.5rem',
       },
       borderRadius: {
-        sm:    token('radius-sm'),
         DEFAULT: token('radius'),
         lg:    token('radius-lg'),
         pill:  token('radius-pill'),
       },
       boxShadow: {
-        sm:  token('shadow-sm'),
-        md:  token('shadow-md'),
-        lg:  token('shadow-lg'),
+        DEFAULT: 'none',
       },
       transitionDuration: {
+        instant: token('dur-instant'),
         fast:   token('dur-fast'),
         normal: token('dur-normal'),
         slow:   token('dur-slow'),
