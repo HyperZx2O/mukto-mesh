@@ -34,7 +34,7 @@ export default function InstallPrompt() {
 
   return (
     <div className="fixed bottom-20 lg:bottom-4 left-4 right-4 z-50 max-w-sm mx-auto">
-      <div className="card p-3 shadow-md flex items-center justify-between gap-3">
+      <div className="card p-3 flex items-center justify-between gap-3">
         <p className="text-small text-text-primary font-bold">
           {t('Install Mukto Mesh', 'মুক্ত মেশ ইনস্টল করুন')}
         </p>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useLanguageStore } from '@/store/useLanguageStore'
 import { useAuthStore } from '@/store/useAuthStore'
+import { playCue } from '@/lib/uiSFX'
 import { api } from '@/lib/api'
 
 export default function AdminLogin() {
@@ -17,11 +18,13 @@ export default function AdminLogin() {
     if (!password.trim()) return
     setPending(true)
     setError('')
-    const res = await api.post<{ token: string }>('/admin/login', { password })
+    const res = await api.post<{ token: string }>('/api/admin/login', { password })
     if (res.data?.token) {
       setAdmin(res.data.token)
+      playCue('success')
     } else {
       setError(t('Incorrect password', 'ভুল পাসওয়ার্ড'))
+      playCue('error')
     }
     setPending(false)
   }
@@ -34,10 +37,11 @@ export default function AdminLogin() {
 
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-1">
-          <label className="text-sm font-bold text-text-primary uppercase tracking-wider">
+          <label htmlFor="admin-password" className="text-sm font-bold text-text-primary uppercase tracking-wider">
             {t('Password', 'পাসওয়ার্ড')}
           </label>
           <input
+            id="admin-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

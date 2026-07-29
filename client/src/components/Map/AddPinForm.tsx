@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useLanguageStore } from '@/store/useLanguageStore'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { playCue } from '@/lib/uiSFX'
 import type { MapPin, PinType } from '@/types'
-import { PIN_TYPES } from '@/lib/constants'
+const PIN_TYPES: PinType[] = ['shelter', 'danger', 'missing', 'medical', 'general']
 
 interface Props {
   lat: number
@@ -24,11 +25,13 @@ export default function AddPinForm({ lat, lng, onSuccess, onCancel }: Props) {
 
   const mutation = useMutation({
     mutationFn: () =>
-      api.post<MapPin>('/pins', { label, type, description: description || null, lat, lng }),
+      api.post<MapPin>('/api/pins', { label, type, description: description || null, lat, lng }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pins'] })
       onSuccess()
+      playCue('success')
     },
+    onError: () => { playCue('error') },
   })
 
   const submit = (e: React.FormEvent) => {
@@ -47,25 +50,25 @@ export default function AddPinForm({ lat, lng, onSuccess, onCancel }: Props) {
   }
 
   return (
-    <div className="absolute bottom-4 left-4 right-4 z-10 max-w-sm mx-auto bg-surface border border-border p-4 shadow-xl">
+    <div className="absolute bottom-4 left-4 right-4 z-10 max-w-sm mx-auto bg-surface border border-border p-4">
       <form onSubmit={submit} className="space-y-3">
         <p className="text-xs text-text-muted">
           {t('Pin at', 'পিনের অবস্থান')}: {lat.toFixed(4)}, {lng.toFixed(4)}
         </p>
 
         <div className="space-y-1">
-          <label className="section-label">
+          <label htmlFor="pin-label" className="section-label">
             {t('Label', 'লেবেল')} <span className="text-danger">*</span>
           </label>
-          <input value={label} onChange={(e) => setLabel(e.target.value)} className="input-field" />
+          <input id="pin-label" value={label} onChange={(e) => setLabel(e.target.value)} className="input-field" />
           {labelError && <p className="text-caption text-danger">{labelError}</p>}
         </div>
 
         <div className="space-y-1">
-          <label className="section-label">
+          <label htmlFor="pin-type" className="section-label">
             {t('Type', 'ধরন')}
           </label>
-          <select value={type} onChange={(e) => setType(e.target.value as PinType)} className="input-field">
+          <select id="pin-type" value={type} onChange={(e) => setType(e.target.value as PinType)} className="input-field">
             {PIN_TYPES.map((pt) => (
               <option key={pt} value={pt}>{typeLabels[pt]}</option>
             ))}
@@ -73,10 +76,10 @@ export default function AddPinForm({ lat, lng, onSuccess, onCancel }: Props) {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-bold text-text-primary uppercase tracking-wider">
+          <label htmlFor="pin-description" className="text-sm font-bold text-text-primary uppercase tracking-wider">
             {t('Description', 'বর্ণনা')}
           </label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary resize-none" />
+          <textarea id="pin-description" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full bg-surface border border-border text-text-primary p-3 text-sm outline-none focus:border-primary resize-none" />
         </div>
 
         <div className="flex gap-2">

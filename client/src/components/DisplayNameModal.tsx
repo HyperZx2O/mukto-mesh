@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useLanguageStore } from '@/store/useLanguageStore'
+import { playCue } from '@/lib/uiSFX'
 
 export default function DisplayNameModal() {
   const displayName = useAuthStore((s) => s.displayName)
@@ -22,6 +23,7 @@ function DisplayNameForm() {
     if (!trimmed) { setError(t('Name is required', 'নাম প্রয়োজনীয়')); return }
     setError('')
     setDisplayName(trimmed, crypto.randomUUID())
+    playCue('success')
   }
 
   return (
@@ -39,7 +41,11 @@ function DisplayNameForm() {
         <h2 id="display-name-title" className="font-display font-heading text-heading text-text-heading mb-4">
           {t('Enter your display name', 'আপনার নাম লিখুন')}
         </h2>
+        <label htmlFor="display-name-input" className="sr-only">
+          {t('Your name', 'আপনার নাম')}
+        </label>
         <input
+          id="display-name-input"
           autoFocus
           value={name}
           onChange={(e) => { setName(e.target.value); setError('') }}

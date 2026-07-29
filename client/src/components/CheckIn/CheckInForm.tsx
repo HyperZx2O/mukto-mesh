@@ -3,8 +3,9 @@ import { useLanguageStore } from '@/store/useLanguageStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useMutation } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { CHECKIN_INTERVALS } from '@/lib/constants'
+import { playCue } from '@/lib/uiSFX'
 import { PHONE_REGEX } from '@/lib/utils'
+const CHECKIN_INTERVALS = [2, 4, 6, 12] as const
 
 interface Props {
   onRegistered: (id: string) => void
@@ -22,12 +23,13 @@ export default function CheckInForm({ onRegistered }: Props) {
   const [phoneError, setPhoneError] = useState('')
 
   const mutation = useMutation({
-    mutationFn: () => api.post<{ id: string }>('/checkin/register', {
+    mutationFn: () => api.post<{ id: string }>('/api/checkin/register', {
       display_name: name, contact_phone: phone, interval_hours: interval,
     }),
     onSuccess: (res) => {
-      if (res.data?.id) onRegistered(res.data.id)
+      if (res.data?.id) { onRegistered(res.data.id); playCue('success') }
     },
+    onError: () => { playCue('error') },
   })
 
   const submit = (e: React.FormEvent) => {
@@ -45,18 +47,18 @@ export default function CheckInForm({ onRegistered }: Props) {
   return (
     <form onSubmit={submit} className="space-y-4 max-w-md">
       <div className="space-y-1">
-        <label className="section-label">
+        <label htmlFor="checkin-name" className="section-label">
           {t('Display Name', 'প্রদর্শনের নাম')}
         </label>
-        <input value={name} onChange={(e) => { setName(e.target.value); setNameError('') }} className="input-field" />
+        <input id="checkin-name" value={name} onChange={(e) => { setName(e.target.value); setNameError('') }} className="input-field" />
         {nameError && <p className="text-caption text-danger">{nameError}</p>}
       </div>
 
       <div className="space-y-1">
-        <label className="section-label">
+        <label htmlFor="checkin-phone" className="section-label">
           {t('Contact Phone', 'যোগাযোগের ফোন')} <span className="text-danger">*</span>
         </label>
-        <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+8801XXXXXXXXX" className="input-field" />
+        <input id="checkin-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+8801XXXXXXXXX" className="input-field" />
         {phoneError && <p className="text-caption text-danger">{phoneError}</p>}
       </div>
 

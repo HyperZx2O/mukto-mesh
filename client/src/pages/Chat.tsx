@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Send } from 'lucide-react'
 import { useLanguageStore } from '@/store/useLanguageStore'
 import { useChatStore } from '@/store/useChatStore'
-import { useWs, sendMessage } from '@/lib/ws'
-import { CHANNELS } from '@/lib/constants'
+import { useWs, sendMessage, sendSwitchChannel } from '@/lib/ws'
+import { playCue } from '@/lib/uiSFX'
 import type { Channel } from '@/types'
+const CHANNELS: Channel[] = ['general', 'emergency', 'coordination', 'medical']
 import ChannelTab from '@/components/Chat/ChannelTab'
 import MessageBubble from '@/components/Chat/MessageBubble'
 
@@ -22,17 +23,21 @@ export default function Chat() {
   const [input, setInput] = useState('')
   const listRef = useRef<HTMLDivElement>(null)
 
-  const filtered = messages.filter((m) => m.channel === activeChannel)
+  const filtered = useMemo(() => messages.filter((m) => m.channel === activeChannel), [messages, activeChannel])
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight
+    const el = listRef.current
+    if (!el) return
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100
+    if (isNearBottom) {
+      el.scrollTop = el.scrollHeight
     }
   }, [filtered.length])
 
   const switchChannel = (ch: Channel) => {
     setChannel(ch)
     clearUnread(ch)
+    sendSwitchChannel(ch)
   }
 
   const submit = (e: React.FormEvent) => {
@@ -40,6 +45,7 @@ export default function Chat() {
     const trimmed = input.trim()
     if (!trimmed) return
     sendMessage(activeChannel, trimmed)
+    playCue('send')
     setInput('')
   }
 
@@ -90,6 +96,7 @@ export default function Chat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           className="input-field"
+          aria-label={t('Message', 'বার্তা')}
           placeholder={t('Type a message...', 'বার্তা লিখুন...')}
         />
         <button

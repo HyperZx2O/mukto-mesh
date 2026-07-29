@@ -3,6 +3,7 @@ import { useLanguageStore } from '@/store/useLanguageStore'
 import { useOfflineStatus } from '@/hooks/useOfflineStatus'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { playCue } from '@/lib/uiSFX'
 import { PHONE_REGEX } from '@/lib/utils'
 import type { MissingPerson } from '@/types'
 
@@ -40,9 +41,9 @@ export default function MissingPersonForm({ onSuccess }: Props) {
         fd.append('contact_name', contactName)
         fd.append('contact_phone', contactPhone)
         fd.append('photo', photo)
-        return api.post<MissingPerson>('/missing', fd)
+        return api.post<MissingPerson>('/api/missing', fd)
       }
-      return api.post<MissingPerson>('/missing', {
+      return api.post<MissingPerson>('/api/missing', {
         name, age: age || null, gender: gender || null,
         last_location: lastLocation, description: description || null,
         contact_name: contactName, contact_phone: contactPhone,
@@ -56,7 +57,9 @@ export default function MissingPersonForm({ onSuccess }: Props) {
       setPhoto(null); setErrors({})
       if (fileRef.current) fileRef.current.value = ''
       onSuccess?.()
+      playCue('success')
     },
+    onError: () => { playCue('error') },
   })
 
   const validate = (): boolean => {
@@ -96,11 +99,12 @@ export default function MissingPersonForm({ onSuccess }: Props) {
     )
   }
 
-  const Field = ({ label, labelBn, children, error, required }: {
-    label: string; labelBn: string; children: React.ReactNode; error?: string; required?: boolean
+  const fieldId = (name: string) => `missing-${name}`
+  const Field = ({ id, label, labelBn, children, error, required }: {
+    id: string; label: string; labelBn: string; children: React.ReactNode; error?: string; required?: boolean
   }) => (
     <div className="space-y-1">
-      <label className="section-label">
+      <label htmlFor={fieldId(id)} className="section-label">
         {lang === 'bn' ? labelBn : label}{required && <span className="text-danger ml-1">*</span>}
       </label>
       {children}
@@ -118,16 +122,16 @@ export default function MissingPersonForm({ onSuccess }: Props) {
         </div>
       )}
 
-      <Field label="Name" labelBn="নাম" error={errors.name} required>
-        <input value={name} onChange={(e) => setName(e.target.value)} className="input-field" />
+      <Field id="name" label="Name" labelBn="নাম" error={errors.name} required>
+        <input id={fieldId('name')} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} className="input-field" />
       </Field>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Age" labelBn="বয়স">
-          <input type="number" value={age} onChange={(e) => setAge(e.target.value)} className="input-field" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field id="age" label="Age" labelBn="বয়স">
+          <input id={fieldId('age')} type="number" value={age} onChange={(e) => setAge(e.target.value)} className="input-field" />
         </Field>
-        <Field label="Gender" labelBn="লিঙ্গ">
-          <select value={gender} onChange={(e) => setGender(e.target.value)} className="input-field">
+        <Field id="gender" label="Gender" labelBn="লিঙ্গ">
+          <select id={fieldId('gender')} value={gender} onChange={(e) => setGender(e.target.value)} className="input-field">
             <option value="">—</option>
             <option value="male">{t('Male', 'পুরুষ')}</option>
             <option value="female">{t('Female', 'নারী')}</option>
@@ -136,24 +140,24 @@ export default function MissingPersonForm({ onSuccess }: Props) {
         </Field>
       </div>
 
-      <Field label="Last Known Location" labelBn="শেষ অবস্থান" error={errors.lastLocation} required>
-        <input value={lastLocation} onChange={(e) => setLastLocation(e.target.value)} className="input-field" />
+      <Field id="location" label="Last Known Location" labelBn="শেষ অবস্থান" error={errors.lastLocation} required>
+        <input id={fieldId('location')} autoComplete="street-address" value={lastLocation} onChange={(e) => setLastLocation(e.target.value)} className="input-field" />
       </Field>
 
-      <Field label="Description" labelBn="বর্ণনা">
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="input-field resize-none" />
+      <Field id="description" label="Description" labelBn="বর্ণনা">
+        <textarea id={fieldId('description')} value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="input-field resize-none" />
       </Field>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Contact Name" labelBn="যোগাযোগের নাম" error={errors.contactName} required>
-          <input value={contactName} onChange={(e) => setContactName(e.target.value)} className="input-field" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field id="contact-name" label="Contact Name" labelBn="যোগাযোগের নাম" error={errors.contactName} required>
+          <input id={fieldId('contact-name')} autoComplete="name" value={contactName} onChange={(e) => setContactName(e.target.value)} className="input-field" />
         </Field>
-        <Field label="Contact Phone" labelBn="যোগাযোগের ফোন" error={errors.contactPhone} required>
-          <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+8801XXXXXXXXX" className="input-field" />
+        <Field id="contact-phone" label="Contact Phone" labelBn="যোগাযোগের ফোন" error={errors.contactPhone} required>
+          <input id={fieldId('contact-phone')} autoComplete="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+8801XXXXXXXXX" className="input-field" />
         </Field>
       </div>
 
-      <Field label="Photo (optional)" labelBn="ছবি (ঐচ্ছিক)">
+      <Field id="photo" label="Photo (optional)" labelBn="ছবি (ঐচ্ছিক)">
         <div className="flex items-center gap-3">
           <input ref={fileRef} type="file" accept="image/*" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} className="text-sm text-text-muted file:mr-3 file:py-2 file:px-4 file:border file:border-border file:bg-surface file:text-text-primary file:text-sm file:font-bold file:uppercase file:tracking-wider file:cursor-pointer" />
           {photo && <span className="text-xs text-text-muted">{photo.name}</span>}

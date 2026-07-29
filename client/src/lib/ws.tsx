@@ -1,7 +1,8 @@
 import { create } from 'zustand'
-import { WS_URL } from './config'
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000/ws'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useChatStore } from '@/store/useChatStore'
+import { playCue } from '@/lib/uiSFX'
 import type { QueryClient } from '@tanstack/react-query'
 
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
@@ -33,6 +34,7 @@ function connect() {
 
   ws.onopen = () => {
     useWs.setState({ connectionStatus: 'connected' })
+    playCue('connect')
     retries = 0
     const { displayName } = useAuthStore.getState()
     ws?.send(JSON.stringify({ type: 'join', displayName }))
@@ -42,12 +44,22 @@ function connect() {
     try {
       const msg = JSON.parse(e.data)
       switch (msg.type) {
+        case 'join_ack':
+          if (msg.messages?.length) {
+            msg.messages.forEach((m: any) => useChatStore.getState().addMessage(m))
+          }
+          playCue('receive')
+          break
         case 'message':
           useChatStore.getState().addMessage(msg)
+          playCue('receive')
           break
         case 'post_created':
         case 'post_pinned':
           qc?.invalidateQueries({ queryKey: ['posts'] })
+          break
+        case 'messages_cleared':
+          useChatStore.getState().clearAll()
           break
         case 'broadcast':
           useWs.setState({ broadcast: msg.message || '' })
@@ -58,6 +70,7 @@ function connect() {
 
   ws.onclose = () => {
     useWs.setState({ connectionStatus: 'disconnected' })
+    playCue('disconnect')
     if (retries < 5) {
       const delay = Math.pow(2, retries) * 1000
       retries++
@@ -86,3 +99,10 @@ export function sendMessage(channel: string, content: string) {
     ws.send(JSON.stringify({ type: 'message', channel, content }))
   }
 }
+
+export function sendSwitchChannel(channel: string) {
+  if (ws?.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'switch_channel', channel }))
+  }
+}
+

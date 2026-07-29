@@ -4,6 +4,7 @@ import { useLanguageStore } from '@/store/useLanguageStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { playCue } from '@/lib/uiSFX'
 import type { PostTag } from '@/types'
 
 const TAGS: PostTag[] = ['safety', 'medical', 'food', 'legal', 'news', 'general']
@@ -27,14 +28,16 @@ export default function NewPostForm() {
   const mutation = useMutation({
     mutationFn: () => {
       const { displayName, userId } = useAuthStore.getState()
-      return api.post('/posts', { display_name: displayName, user_id: userId, tag, content })
+      return api.post('/api/posts', { display_name: displayName, user_id: userId, tag, content })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       setContent('')
       setTag('general')
       setOpen(false)
+      playCue('success')
     },
+    onError: () => { playCue('error') },
   })
 
   const submit = (e: React.FormEvent) => {
@@ -46,7 +49,7 @@ export default function NewPostForm() {
   if (!open) {
     return (
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); playCue('open') }}
         className="btn-ghost flex items-center gap-2"
       >
         <Plus size={16} />
@@ -73,7 +76,11 @@ export default function NewPostForm() {
           </button>
         ))}
       </div>
+      <label htmlFor="new-post-content" className="sr-only">
+        {t('Post content', 'পোস্টের বিষয়বস্তু')}
+      </label>
       <textarea
+        id="new-post-content"
         value={content}
         onChange={(e) => setContent(e.target.value)}
         className="input-field resize-none"
@@ -91,7 +98,7 @@ export default function NewPostForm() {
         </button>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={() => { setOpen(false); playCue('close') }}
           className="btn-ghost"
         >
           {t('Cancel', 'বাতিল')}

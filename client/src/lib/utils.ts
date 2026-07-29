@@ -3,6 +3,7 @@ export function cn(...inputs: (string | false | null | undefined)[]) {
 }
 
 export function timeAgo(timestamp: number): string {
+  if (!timestamp || !Number.isFinite(timestamp)) return ''
   const seconds = Math.floor((Date.now() - timestamp) / 1000)
   if (seconds < 60) return 'just now'
   const minutes = Math.floor(seconds / 60)

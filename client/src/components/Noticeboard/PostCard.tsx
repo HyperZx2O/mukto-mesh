@@ -38,7 +38,7 @@ export default function PostCard({ post, isAdmin, onPin, onDelete }: Props) {
     <div className={`bg-surface border p-4 space-y-2 ${post.pinned ? 'border-primary' : 'border-border'}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
-          {post.pinned && <Pin size={14} className="text-primary shrink-0" />}
+          {post.pinned === true && <Pin size={14} className="text-primary shrink-0" />}
           <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 ${tagBadgeClass(post.tag)}`}>
             {lang === 'bn' ? TAG_LABELS[post.tag].bn : TAG_LABELS[post.tag].en}
           </span>

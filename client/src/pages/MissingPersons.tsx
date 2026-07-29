@@ -24,8 +24,8 @@ export default function MissingPersons() {
   const { data, isLoading, isError } = useQuery<ApiResponse<MissingPerson[]>>({
     queryKey: ['missing', debounced],
     queryFn: () => {
-      if (!debounced) return api.get<MissingPerson[]>('/missing')
-      return api.get<MissingPerson[]>(`/missing/search?q=${encodeURIComponent(debounced)}`)
+      if (!debounced) return api.get<MissingPerson[]>('/api/missing')
+      return api.get<MissingPerson[]>(`/api/missing/search?q=${encodeURIComponent(debounced)}`)
     },
   })
 
@@ -55,7 +55,7 @@ export default function MissingPersons() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex gap-1 bg-surface border border-border p-1 w-fit">
         {tabs.map(({ id, label, Icon }) => (
           <button
@@ -80,6 +80,7 @@ export default function MissingPersons() {
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('Search by name or location...', 'নাম বা অবস্থান দ্বারা অনুসন্ধান...')}
               className="input-field pl-10"
+              aria-label={t('Search missing persons', 'নিখোঁজ ব্যক্তি অনুসন্ধান')}
             />
           </div>
 
@@ -119,24 +120,26 @@ export default function MissingPersons() {
             </div>
           )}
 
-          {results.map((person) => (
-            <div key={person.id} className="bg-surface border border-border p-4 space-y-2">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-bold text-text-primary">{person.name}</h3>
-                {statusBadge(person.status)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {results.map((person) => (
+              <div key={person.id} className="bg-surface border border-border p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-bold text-text-primary">{person.name}</h3>
+                  {statusBadge(person.status)}
+                </div>
+                <p className="text-sm text-text-muted">
+                  {person.lastLocation}
+                  {person.age != null && ` · ${person.age} ${t('yrs', 'বছর')}`}
+                </p>
+                {person.description && (
+                  <p className="text-sm text-text-muted">{person.description}</p>
+                )}
+                <div className="text-xs text-text-muted pt-1">
+                  {t('Contact', 'যোগাযোগ')}: {person.contactName} · {person.contactPhone}
+                </div>
               </div>
-              <p className="text-sm text-text-muted">
-                {person.lastLocation}
-                {person.age != null && ` · ${person.age} ${t('yrs', 'বছর')}`}
-              </p>
-              {person.description && (
-                <p className="text-sm text-text-muted">{person.description}</p>
-              )}
-              <div className="text-xs text-text-muted pt-1">
-                {t('Contact', 'যোগাযোগ')}: {person.contactName} · {person.contactPhone}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 

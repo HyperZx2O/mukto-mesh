@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useLanguageStore } from '@/store/useLanguageStore'
@@ -8,32 +9,32 @@ import { timeAgo } from '@/lib/utils'
 import type { Post, MissingPerson, NewsArticle, MapPin, NodeStatus, ApiResponse } from '@/types'
 import {
   MessageSquare, ClipboardList, BookOpen, Users, MapPin as MapPinIcon,
-  Newspaper, Activity, ShieldAlert, Wifi, HeartPulse,
-  ArrowRight, Clock,
+  Newspaper, ShieldAlert, Wifi, HeartPulse,
+  ArrowRight, Clock, LayoutDashboard,
 } from 'lucide-react'
 
 const quickLinks = [
-  { path: '/chat', label: 'Chat', labelBn: 'চ্যাট', icon: MessageSquare, desc: 'Real-time messaging', descBn: 'রিয়েল-টাইম বার্তা', color: 'border-l-primary' },
-  { path: '/board', label: 'Board', labelBn: 'বোর্ড', icon: ClipboardList, desc: 'Community alerts & updates', descBn: 'কমিউনিটি এলার্ট ও আপডেট', color: 'border-l-warning' },
-  { path: '/info', label: 'Info', labelBn: 'তথ্য', icon: BookOpen, desc: 'Know your rights & first aid', descBn: 'আপনার অধিকার ও প্রাথমিক চিকিৎসা', color: 'border-l-tag-legal' },
-  { path: '/people', label: 'People', labelBn: 'জনগণ', icon: Users, desc: 'Find missing persons', descBn: 'নিখোঁজ ব্যক্তি অনুসন্ধান', color: 'border-l-primary-text' },
-  { path: '/map', label: 'Map', labelBn: 'মানচিত্র', icon: MapPinIcon, desc: 'Offline Bangladesh map', descBn: 'অফলাইন বাংলাদেশ মানচিত্র', color: 'border-l-success' },
-  { path: '/news', label: 'News', labelBn: 'সংবাদ', icon: Newspaper, desc: 'Verified news feed', descBn: 'যাচাইকৃত সংবাদ', color: 'border-l-danger' },
+  { path: '/chat', label: 'Chat', labelBn: 'চ্যাট', icon: MessageSquare, desc: 'Real-time messaging', descBn: 'রিয়েল-টাইম বার্তা' },
+  { path: '/board', label: 'Board', labelBn: 'বোর্ড', icon: ClipboardList, desc: 'Community alerts & updates', descBn: 'কমিউনিটি এলার্ট ও আপডেট' },
+  { path: '/info', label: 'Info', labelBn: 'তথ্য', icon: BookOpen, desc: 'Know your rights & first aid', descBn: 'আপনার অধিকার ও প্রাথমিক চিকিৎসা' },
+  { path: '/people', label: 'People', labelBn: 'জনগণ', icon: Users, desc: 'Find missing persons', descBn: 'নিখোঁজ ব্যক্তি অনুসন্ধান' },
+  { path: '/map', label: 'Map', labelBn: 'মানচিত্র', icon: MapPinIcon, desc: 'Offline Bangladesh map', descBn: 'অফলাইন বাংলাদেশ মানচিত্র' },
+  { path: '/news', label: 'News', labelBn: 'সংবাদ', icon: Newspaper, desc: 'Verified news feed', descBn: 'যাচাইকৃত সংবাদ' },
 ]
 
 function DashboardSkeleton() {
   return (
     <div className="space-y-5 sm:space-y-6 animate-pulse">
-      <div className="h-7 sm:h-8 bg-surface w-48 sm:w-64" />
+      <div className="h-8 sm:h-9 bg-surface w-48 sm:w-64 rounded" />
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {[1, 2, 3, 4, 5, 6].map(i => (
-          <div key={i} className="h-24 sm:h-28 bg-surface border border-border" />
+          <div key={i} className="h-24 sm:h-28 bg-surface border border-border rounded" />
         ))}
       </div>
-      <div className="h-5 sm:h-6 bg-surface w-32 sm:w-48" />
+      <div className="h-5 sm:h-6 bg-surface w-32 sm:w-48 rounded" />
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         {[1, 2, 3, 4, 5, 6].map(i => (
-          <div key={i} className="h-20 sm:h-24 bg-surface border border-border" />
+          <div key={i} className="h-20 sm:h-24 bg-surface border border-border rounded" />
         ))}
       </div>
     </div>
@@ -49,9 +50,9 @@ function MetricCard({
   const t = (en: string, bn: string) => (lang === 'bn' ? bn : en)
 
   return (
-    <div className="bg-surface border border-border p-4 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-primary hover:shadow-sm transition-all duration-fast ease-out group">
+    <div className="metric-card group">
       <div className="flex items-center justify-between">
-        <Icon size={18} className="text-text-dim group-hover:text-accent-text transition-colors duration-fast" />
+        <Icon size={18} className="text-text-dim group-hover:text-primary-text transition-colors duration-fast" />
         {trend && (
           <span className={`text-caption font-bold uppercase tracking-wider ${
             trend === 'up' ? 'text-success' : trend === 'down' ? 'text-danger' : 'text-text-muted'
@@ -60,7 +61,7 @@ function MetricCard({
           </span>
         )}
       </div>
-      <p className="stat-value text-text-heading">{value}</p>
+      <p className="stat-value">{value}</p>
       <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t(label, labelBn)}</p>
       {sub && <p className="text-caption text-text-dim leading-tight hidden sm:block">{sub}</p>}
     </div>
@@ -78,32 +79,32 @@ export default function Dashboard() {
   // Public data queries
   const { data: postsData, isLoading: postsLoading } = useQuery<ApiResponse<Post[]>>({
     queryKey: ['posts'],
-    queryFn: () => api.get<Post[]>('/posts'),
+    queryFn: () => api.get<Post[]>('/api/posts'),
     refetchInterval: 30_000,
   })
 
   const { data: missingData, isLoading: missingLoading } = useQuery<ApiResponse<MissingPerson[]>>({
     queryKey: ['missing'],
-    queryFn: () => api.get<MissingPerson[]>('/missing'),
+    queryFn: () => api.get<MissingPerson[]>('/api/missing'),
     refetchInterval: 30_000,
   })
 
   const { data: newsData, isLoading: newsLoading } = useQuery<ApiResponse<NewsArticle[]>>({
     queryKey: ['news'],
-    queryFn: () => api.get<NewsArticle[]>('/news'),
+    queryFn: () => api.get<NewsArticle[]>('/api/news'),
     refetchInterval: 60_000,
   })
 
   const { data: pinsData, isLoading: pinsLoading } = useQuery<ApiResponse<MapPin[]>>({
     queryKey: ['pins'],
-    queryFn: () => api.get<MapPin[]>('/pins'),
+    queryFn: () => api.get<MapPin[]>('/api/pins'),
     refetchInterval: 30_000,
   })
 
-  // Live node status: connection count + check-in summary (public endpoint)
+  // Live node status: connection count + check-in summary
   const { data: statusData, isLoading: statusLoading } = useQuery<ApiResponse<NodeStatus>>({
     queryKey: ['status'],
-    queryFn: () => api.get<NodeStatus>('/status'),
+    queryFn: () => api.get<NodeStatus>('/api/status'),
     refetchInterval: 10_000,
   })
 
@@ -118,16 +119,16 @@ export default function Dashboard() {
   const unresponsiveCheckins = status?.checkins.unresponsive ?? 0
   const totalCheckins = status?.checkins.total ?? 0
 
-  const pinnedPosts = posts.filter(p => p.pinned).slice(0, 5)
-  const recentPosts = posts.filter(p => !p.pinned).slice(0, 3)
-  const missingCount = missing.filter(m => m.status === 'missing').length
-  const foundCount = missing.filter(m => m.status === 'found').length
+  const pinnedPosts = useMemo(() => posts.filter(p => p.pinned).slice(0, 5), [posts])
+  const recentPosts = useMemo(() => posts.filter(p => !p.pinned).slice(0, 3), [posts])
+  const missingCount = useMemo(() => missing.filter(m => m.status === 'missing').length, [missing])
+  const foundCount = useMemo(() => missing.filter(m => m.status === 'found').length, [missing])
 
   const isLoading = postsLoading || missingLoading || newsLoading || pinsLoading || statusLoading
 
   if (isLoading) {
     return (
-      <div className="p-3 sm:p-4 lg:p-6 space-y-5 sm:space-y-6">
+      <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
         <DashboardSkeleton />
       </div>
     )
@@ -140,28 +141,31 @@ export default function Dashboard() {
     : t('Disconnected', 'সংযোগ বিচ্ছিন্ন')
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-6 sm:space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 max-w-7xl mx-auto">
       {/* Welcome + Status */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="space-y-0.5 sm:space-y-1 min-w-0">
-          <h1 className="font-display font-heading text-display text-text-heading leading-tight">
+          <h1 className="font-display font-heading text-display text-text-heading leading-tight uppercase tracking-wider">
             {t('Dashboard', 'ড্যাশবোর্ড')}
           </h1>
           {displayName && (
-            <p className="text-small sm:text-body text-text-muted">
+            <p className="text-small sm:text-body text-text-muted accent-bar mt-2">
               {t('Welcome', 'স্বাগতম')}, <span className="text-text-primary font-bold">{displayName}</span>
             </p>
           )}
         </div>
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {isAdmin && (
-            <span className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-primary bg-primary-muted px-3 py-1.5 border border-primary-muted">
+            <button
+              onClick={() => navigate('/admin')}
+              className="pill bg-primary-muted text-primary-text hover:bg-primary/20 transition-colors cursor-pointer"
+            >
               <ShieldAlert size={12} />
               <span className="hidden sm:inline">{t('Admin', 'অ্যাডমিন')}</span>
-            </span>
+            </button>
           )}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-border">
-            <span className={`w-2 h-2 rounded-full ${statusColor}`} />
+          <div className="pill bg-surface border border-border">
+            <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} />
             <span className="text-caption text-text-muted uppercase tracking-wider">{statusText}</span>
           </div>
         </div>
@@ -169,12 +173,12 @@ export default function Dashboard() {
 
       <div className="space-y-5 sm:space-y-6">
         {/* Tagline */}
-        <p className="text-small sm:text-body text-text-muted italic border-l-2 border-primary pl-4 leading-relaxed">
+        <p className="text-small sm:text-body text-text-muted italic accent-bar leading-relaxed">
           &ldquo;{t('Stay connected when they cut the cord.', 'তারা সংযোগ কেটে দিলেও সংযুক্ত থাকুন।')}&rdquo;
         </p>
 
         {/* Metric Cards: 2-col mobile, 3-col tablet, 6-col desktop */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 pt-2">
           <MetricCard
             label="Online" labelBn="অনলাইন"
             value={connectedUsers}
@@ -218,10 +222,7 @@ export default function Dashboard() {
 
         {/* Quick Action Buttons: 1-col mobile, 2-col tablet, 3-col desktop */}
         <section className="space-y-3 sm:space-y-4">
-          <h2 className="section-label flex items-center gap-1.5">
-            <Activity size={14} />
-            {t('Quick Actions', 'দ্রুত কার্যকলাপ')}
-          </h2>
+          <h2 className="section-head">{t('Quick Actions', 'দ্রুত কার্যকলাপ')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
             {quickLinks.map((link) => {
               const Icon = link.icon
@@ -229,11 +230,13 @@ export default function Dashboard() {
                 <button
                   key={link.path}
                   onClick={() => navigate(link.path)}
-                  className={`card-hover p-3 sm:p-4 text-left space-y-1.5 sm:space-y-2 ${link.color} border-l-4`}
+                  className="card-hover p-3 sm:p-4 text-left space-y-1.5 sm:space-y-2 group"
                 >
-                  <Icon size={18} className="text-text-dim group-hover text-primary transition-colors" />
+                  <div className="w-9 h-9 flex items-center justify-center bg-primary-muted group-hover:bg-primary/20 transition-colors">
+                    <Icon size={16} className="text-primary-text" />
+                  </div>
                   <div className="min-w-0">
-                    <p className="text-small sm:text-body font-bold text-text-primary tracking-wider truncate">
+                    <p className="text-small sm:text-body font-bold text-text-primary tracking-wide truncate">
                       {t(link.label, link.labelBn)}
                     </p>
                     <p className="text-caption text-text-muted mt-0.5 truncate">
@@ -246,42 +249,44 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Pinned Posts Carousel */}
+        {/* Pinned Alerts */}
         {pinnedPosts.length > 0 && (
           <section className="space-y-2 sm:space-y-3">
-            <h2 className="section-label flex items-center gap-1.5">
-              <ShieldAlert size={14} className="text-primary" />
+            <h2 className="section-head">
+              <ShieldAlert size={14} className="text-primary-text" />
               {t('Pinned Alerts', 'পিন করা এলার্ট')}
             </h2>
             <div className="space-y-1.5 sm:space-y-2">
               {pinnedPosts.map((post) => (
-                <div
+                <button
                   key={post.id}
-                  className="card-hover p-3 sm:p-4 cursor-pointer"
+                  type="button"
                   onClick={() => navigate('/board')}
+                  className="card-hover p-3 sm:p-4 text-left w-full"
                 >
                   <div className="flex items-center gap-2 text-caption text-text-muted mb-1">
-                    <span className="text-primary-text font-bold uppercase tracking-wider">Pinned</span>
+                    <span className="badge bg-primary-muted text-primary-text">Pinned</span>
                     <span>·</span>
                     <span>{timeAgo(post.createdAt)}</span>
                   </div>
                   <p className="text-small sm:text-body text-text-primary line-clamp-2 leading-relaxed">{post.content}</p>
-                </div>
+                </button>
               ))}
             </div>
           </section>
         )}
 
-        {/* Status Summary */}
+        {/* Recent Activity */}
         <section className="space-y-3 sm:space-y-4">
-          <h2 className="section-label flex items-center gap-1.5">
-            <Clock size={14} />
+          <h2 className="section-head">
+            <Clock size={14} className="text-primary-text" />
             {t('Recent Activity', 'সাম্প্রতিক কার্যকলাপ')}
           </h2>
 
           {recentPosts.length === 0 && posts.length === 0 && (
             <div className="empty-state">
-              <p className="text-small sm:text-body text-text-muted leading-relaxed">
+              <LayoutDashboard size={24} className="mx-auto mb-3 text-text-dim" />
+              <p className="text-body text-text-muted leading-relaxed">
                 {t('No activity yet. Start by posting to the noticeboard or checking in.', 'এখনো কোনো কার্যকলাপ নেই। নোটিশ বোর্ডে পোস্ট করে বা চেক-ইন করে শুরু করুন।')}
               </p>
             </div>
@@ -289,14 +294,12 @@ export default function Dashboard() {
 
           {recentPosts.length > 0 && (
             <div className="space-y-1.5 sm:space-y-2">
-              <p className="section-label">
-                {t('Latest Posts', 'সর্বশেষ পোস্ট')}
-              </p>
               {recentPosts.map((post) => (
-                <div
+                <button
                   key={post.id}
-                  className="card-hover p-3 sm:p-4 cursor-pointer"
+                  type="button"
                   onClick={() => navigate('/board')}
+                  className="card-hover p-3 sm:p-4 text-left w-full"
                 >
                   <div className="flex items-center gap-2 text-caption text-text-muted mb-1">
                     <span className="text-text-primary font-bold text-small">{post.displayName}</span>
@@ -304,43 +307,43 @@ export default function Dashboard() {
                     <span>{timeAgo(post.createdAt)}</span>
                   </div>
                   <p className="text-small sm:text-body text-text-muted line-clamp-2 leading-relaxed">{post.content}</p>
-                </div>
+                </button>
               ))}
               <button
                 onClick={() => navigate('/board')}
-                className="flex items-center gap-1 text-caption text-primary-text hover:text-primary font-bold uppercase tracking-wider mt-1 transition-colors"
+                className="flex items-center gap-1 text-caption text-primary-text hover:text-primary font-bold uppercase tracking-wider mt-1 transition-colors group"
               >
                 {t('View all posts', 'সব পোস্ট দেখুন')}
-                <ArrowRight size={12} />
+                <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
               </button>
             </div>
           )}
         </section>
 
         {/* Community Stats Footer: 2-col mobile, 3-col tablet, 6-col desktop */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 pt-4 sm:pt-5 border-t border-border">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 pt-5 sm:pt-6 border-t border-border">
           <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-primary tabular-nums">{connectedUsers}</p>
+            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{connectedUsers}</p>
             <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Online', 'অনলাইন')}</p>
           </div>
           <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-primary tabular-nums">{totalCheckins}</p>
+            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{totalCheckins}</p>
             <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Check-ins', 'চেক-ইন')}</p>
           </div>
           <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-primary tabular-nums">{posts.length}</p>
+            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{posts.length}</p>
             <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Posts', 'পোস্ট')}</p>
           </div>
           <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-primary tabular-nums">{missing.length}</p>
+            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{missing.length}</p>
             <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Reports', 'রিপোর্ট')}</p>
           </div>
           <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-primary tabular-nums">{news.length}</p>
+            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{news.length}</p>
             <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('News', 'সংবাদ')}</p>
           </div>
           <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-primary tabular-nums">{pins.length}</p>
+            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{pins.length}</p>
             <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Pins', 'পিন')}</p>
           </div>
         </div>

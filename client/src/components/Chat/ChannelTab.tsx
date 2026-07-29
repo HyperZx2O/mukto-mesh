@@ -25,9 +25,13 @@ export default function ChannelTab({ channel, active, unread, onClick }: Props) 
       onClick={onClick}
       className={`relative flex items-center gap-2 px-4 py-2 text-caption font-bold uppercase tracking-wider border shrink-0 ${
         active
-          ? 'bg-primary text-white border-primary'
-          : 'bg-surface text-text-muted border-border hover:text-text-primary'
-      } ${isEmergency ? 'border-l-2 border-l-danger' : ''}`}
+          ? isEmergency
+            ? 'bg-danger text-white border-danger'
+            : 'bg-primary text-white border-primary'
+          : isEmergency
+            ? 'bg-danger-muted text-danger border-danger hover:text-danger'
+            : 'bg-surface text-text-muted border-border hover:text-text-primary'
+      }`}
     >
       {lang === 'bn' ? label.bn : label.en}
       {unread > 0 && (

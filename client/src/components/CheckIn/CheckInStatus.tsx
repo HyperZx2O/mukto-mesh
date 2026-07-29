@@ -30,14 +30,14 @@ export default function CheckInStatus({ checkinId }: Props) {
 
   const { data, isLoading, isError } = useQuery<ApiResponse<Checkin>>({
     queryKey: ['checkin', checkinId],
-    queryFn: () => api.get<Checkin>(`/checkin/lookup/${checkinId}`),
+    queryFn: () => api.get<Checkin>(`/api/checkin/lookup/${checkinId}`),
     refetchInterval: 30_000,
   })
 
   const toast = useToast()
 
   const pingMutation = useMutation({
-    mutationFn: () => api.post(`/checkin/ping`, { id: checkinId }),
+    mutationFn: () => api.post(`/api/checkin/ping`, { id: checkinId }),
     onSuccess: () => { setNow(Date.now()); toast.toast(t("I'm Safe ping sent", 'আমি নিরাপদ পিং পাঠানো হয়েছে')) },
   })
 

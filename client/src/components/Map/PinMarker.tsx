@@ -21,10 +21,10 @@ export function createPinElement(pin: MapPin): HTMLElement {
   const bgClass = PIN_CLASSES[pin.type]
   const el = document.createElement('div')
   el.className = `${bgClass} inline-flex items-center justify-center cursor-pointer`
-  el.style.cssText += `width:36px;height:36px;border-radius:var(--radius-pill, 9999px);color:var(--color-text-heading, #fff);font-size:14px;font-weight:700;border:2px solid color-mix(in oklch, var(--color-text, #f5f5f5) 60%, transparent);box-shadow:var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.4));transition:transform var(--dur-fast) var(--ease-out)`
+  el.style.cssText += `width:36px;height:36px;border-radius:var(--radius-pill, 9999px);color:var(--color-text-heading, #fff);font-size:14px;font-weight:700;border:2px solid color-mix(in oklch, var(--color-text, #f5f5f5) 60%, transparent);transition:box-shadow var(--dur-fast) var(--ease-out)`
   el.textContent = label
-  el.addEventListener('mouseenter', () => { el.style.transform = 'scale(1.2)' })
-  el.addEventListener('mouseleave', () => { el.style.transform = 'scale(1)' })
+  el.addEventListener('mouseenter', () => { el.style.boxShadow = '0 0 0 5px rgba(255,255,255,0.3)' })
+  el.addEventListener('mouseleave', () => { el.style.boxShadow = '' })
   return el
 }
 

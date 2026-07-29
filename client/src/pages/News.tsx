@@ -26,11 +26,11 @@ export default function News() {
 
   const { data, isLoading, isError } = useQuery<ApiResponse<NewsArticle[]>>({
     queryKey: ['news'],
-    queryFn: () => api.get<NewsArticle[]>('/news'),
+    queryFn: () => api.get<NewsArticle[]>('/api/news'),
   })
 
   const refresh = useMutation({
-    mutationFn: () => api.post<{ message: string }>('/news/refresh', {}),
+    mutationFn: () => api.post<{ message: string }>('/api/news/refresh', {}),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['news'] }),
   })
 
@@ -40,7 +40,7 @@ export default function News() {
     : null
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-display font-heading text-heading text-text-heading">
@@ -69,8 +69,8 @@ export default function News() {
 
       {/* Loading skeleton */}
       {isLoading && (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-surface border border-border p-4 space-y-3 animate-pulse">
               <div className="h-4 bg-background w-24" />
               <div className="h-5 bg-background w-3/4" />
@@ -100,7 +100,7 @@ export default function News() {
 
       {/* Article cards */}
       {articles.length > 0 && (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {articles.map((article) => (
             <article
               key={article.id}

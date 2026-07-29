@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useWs, initWs, closeWs, setQueryClient } from '@/lib/ws'
+import { playCue } from '@/lib/uiSFX'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
 
@@ -19,12 +20,20 @@ export default function App() {
   const queryClient = useQueryClient()
   const broadcast = useWs((s) => s.broadcast)
   const dismissBroadcast = useWs((s) => s.dismissBroadcast)
+  const prevBroadcast = useRef<string | null>(null)
 
   useEffect(() => {
     setQueryClient(queryClient)
     initWs()
     return () => closeWs()
   }, [queryClient])
+
+  useEffect(() => {
+    if (broadcast && broadcast !== prevBroadcast.current) {
+      playCue('notification')
+    }
+    prevBroadcast.current = broadcast
+  }, [broadcast])
 
   return (
     <BrowserRouter>

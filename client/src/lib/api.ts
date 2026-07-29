@@ -1,4 +1,4 @@
-import { API_URL } from './config'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 import { useAuthStore } from '@/store/useAuthStore'
 import type { ApiResponse } from '@/types'
 

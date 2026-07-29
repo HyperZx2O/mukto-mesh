@@ -8,6 +8,7 @@ interface ChatState {
   addMessage: (msg: ChatMessage) => void
   setChannel: (channel: Channel) => void
   clearUnread: (channel: Channel) => void
+  clearAll: () => void
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -16,12 +17,15 @@ export const useChatStore = create<ChatState>((set) => ({
   unread: { general: 0, emergency: 0, coordination: 0, medical: 0 },
 
   addMessage: (msg) => {
-    set((s) => ({
-      messages: [...s.messages, msg],
-      unread: msg.channel !== s.activeChannel
-        ? { ...s.unread, [msg.channel]: s.unread[msg.channel] + 1 }
-        : s.unread,
-    }))
+    set((s) => {
+      if (s.messages.some((m) => m.id === msg.id)) return s
+      return {
+        messages: [...s.messages, msg],
+        unread: msg.channel !== s.activeChannel
+          ? { ...s.unread, [msg.channel]: s.unread[msg.channel] + 1 }
+          : s.unread,
+      }
+    })
   },
 
   setChannel: (channel) => set({ activeChannel: channel }),
@@ -29,4 +33,5 @@ export const useChatStore = create<ChatState>((set) => ({
   clearUnread: (channel) => set((s) => ({
     unread: { ...s.unread, [channel]: 0 }
   })),
+  clearAll: () => set({ messages: [] }),
 }))

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { playCue } from '@/lib/uiSFX'
 
 type ToastType = 'success' | 'error'
 
@@ -20,6 +21,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const toast = useCallback((message: string, type: ToastType = 'success') => {
+    playCue(type === 'success' ? 'success' : 'error')
     const id = nextId++
     setToasts((prev) => [...prev, { id, message, type }])
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), type === 'error' ? 5000 : 3000)
@@ -32,7 +34,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto px-4 py-3 text-sm font-bold uppercase tracking-wider border shadow-xl ${
+            className={`pointer-events-auto px-4 py-3 text-sm font-bold uppercase tracking-wider border ${
               t.type === 'success'
                 ? 'bg-primary text-white border-primary'
                 : 'bg-danger text-white border-danger'
