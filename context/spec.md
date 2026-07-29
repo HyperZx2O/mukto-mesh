@@ -29,11 +29,10 @@
 22. [Logging and Monitoring](#22-logging-and-monitoring)
 23. [Testing Strategy](#23-testing-strategy)
 24. [Deployment Strategy](#24-deployment-strategy)
-25. [Development Roadmap and Milestones](#25-development-roadmap-and-milestones)
+25. [Development Milestones](#25-development-milestones)
 26. [Future Enhancements](#26-future-enhancements)
 27. [Assumptions, Constraints, and Trade-offs](#27-assumptions-constraints-and-trade-offs)
 28. [Reference Repositories](#28-reference-repositories)
-29. [To Be Decided (TBD)](#29-to-be-decided-tbd)
 
 ---
 
@@ -47,11 +46,11 @@
 
 **Track justification:** Mukto Mesh is directly dedicated to the spirit of Jogajog — the decentralised communication network students used during the internet shutdowns of the July 2024 Revolution. It addresses what happens when infrastructure fails and communities need to function without it.
 
-**Vision:** Mukto Mesh is a lightweight, offline-first, self-hostable community hub that any person in Bangladesh can download once and spin up on a laptop, instantly turning their local network into a functioning crisis coordination node — with chat, alerts, a knowledge base, missing person registry, safe check-in, and offline maps. No cloud dependency. No technical expertise required beyond running one command.
+**Vision:** Mukto Mesh is a lightweight, offline-first, self-hostable community hub that any person in Bangladesh can download once and spin up on a laptop, instantly turning their local network into a functioning crisis coordination node — with chat, alerts, a knowledge base, missing person registry, safe check-in, an operational dashboard, and offline maps. No cloud dependency. No technical expertise required beyond running one command or double-clicking a batch file.
 
 **Distribution model:** Dual-mode.
 - **Online:** Deployed on Railway (backend) and Vercel (frontend), accessible to anyone with internet.
-- **Offline node:** Downloaded from GitHub Releases, run locally via `npm start`, serves the entire neighbourhood over a shared WiFi hotspot. The browser is the client — no installation required on any other device.
+- **Offline node:** Downloaded from GitHub Releases, run locally via `npm start` or `start.bat`, serves the entire neighbourhood over a shared WiFi hotspot. The browser is the client — no installation required on any other device.
 
 ---
 
@@ -61,12 +60,13 @@
 
 - Build a fully functional offline-first PWA that works on any modern phone browser via local network
 - Provide real-time LAN chat without requiring internet
+- Provide a crisis Dashboard with live metrics (connected users, check-ins, posts, missing persons, news, map pins)
 - Serve a preloaded, Bangladesh-specific knowledge base in Bangla and English
-- Enable missing person registration and search, with sync when internet returns
+- Enable missing person registration and search with photo upload, with sync when internet returns
 - Implement a safe check-in system that auto-flags unresponsive users
 - Serve offline Bangladesh maps via ProtoMaps PMTiles
 - Cache verified news from trusted Bangladeshi sources for offline reading
-- Be distributable as a single downloadable package from GitHub
+- Be distributable as a single downloadable package from GitHub with a one-click launcher
 - Ship a complete, polished submission before July 30 23:59 BST
 
 ### Non-Goals
@@ -100,7 +100,7 @@ The next shutdown won't announce itself. And right now, nobody is ready.
 |---|---|
 | Node operator | Downloads and runs Mukto Mesh on their laptop during or before a crisis. Becomes the hub for their building or neighbourhood. |
 | Community member | Connects to the node via their phone browser on shared WiFi. No download required. |
-| Node admin | Manages the noticeboard, pins critical alerts, broadcasts emergency messages. |
+| Node admin | Manages the noticeboard, pins critical alerts, broadcasts emergency messages, updates missing person statuses. |
 
 ### Use Cases
 
@@ -118,15 +118,16 @@ The next shutdown won't announce itself. And right now, nobody is ready.
 | FR-01 | The system shall provide real-time chat over LAN via WebSockets with no internet |
 | FR-02 | The system shall provide a community noticeboard with tagged posts and pinning |
 | FR-03 | The system shall serve a preloaded knowledge base in Bangla and English |
-| FR-04 | The system shall allow users to register and search missing persons |
+| FR-04 | The system shall allow users to register and search missing persons with photo uploads |
 | FR-05 | The system shall implement a safe check-in system with auto-flagging on missed intervals |
 | FR-06 | The system shall cache verified news from trusted Bangladeshi sources for offline reading |
 | FR-07 | The system shall serve offline Bangladesh maps via ProtoMaps PMTiles |
-| FR-08 | The system shall provide a node admin panel to manage posts, users, and broadcasts |
+| FR-08 | The system shall provide a node admin panel to manage posts, users, check-ins, and broadcasts |
 | FR-09 | The system shall function as an installable PWA on any mobile device |
 | FR-10 | The system shall auto-sync queued offline data when internet is restored |
-| FR-11 | The system shall be launchable with a single `npm start` command |
+| FR-11 | The system shall be launchable with a single `npm start` command or by double-clicking `start.bat` |
 | FR-12 | The system shall be downloadable as a packaged release from GitHub |
+| FR-13 | The system shall provide a Dashboard landing page with live crisis metrics and quick actions |
 
 ---
 
@@ -136,6 +137,7 @@ The next shutdown won't announce itself. And right now, nobody is ready.
 - Initial page load under 2 seconds on a local network
 - WebSocket message delivery under 100ms on LAN
 - Knowledge base pages render instantly from cache — no network request required
+- Dashboard metrics poll every 10–30 seconds with skeleton loading states
 
 ### Offline Capability
 - All core features must function with zero internet after first load
@@ -147,22 +149,44 @@ The next shutdown won't announce itself. And right now, nobody is ready.
 - Not designed for national-scale simultaneous users on a single node
 
 ### Accessibility
-- Bilingual UI: Bangla and English throughout
-- WCAG AA colour contrast minimum
-- Keyboard navigable
+- Bilingual UI: Bangla and English throughout with prominent toggle
+- WCAG AA colour contrast minimum (verified via OKLCH perceptual palette)
+- Keyboard navigable with custom focus-visible ring
+- Minimum 44px tap targets on all interactive elements
 - Readable on low-resolution budget Android phones
 
 ### Security
 - No surveillance tooling — the app explicitly does not track location or collect personal data beyond what users voluntarily submit
 - Missing person entries and check-in contact numbers stored in SQLite, not transmitted without user action
+- Admin panel protected by JWT-based password authentication
 
 ### Reliability
-- Graceful degradation: every feature must have a defined behaviour when internet is unavailable
+- Graceful degradation: every feature has a defined behaviour when internet is unavailable
 - Node continues serving all features as long as the host laptop stays on
+- Offline badge informs users that the app is operating in offline mode intentionally
 
 ---
 
 ## 7. Complete Feature List with Detailed Behaviour
+
+### 7.0 Dashboard (Landing Page)
+
+- Default landing page at `/` — no more redirect to chat
+- Displays live crisis metrics in a responsive grid:
+  - **Online users** — real-time WebSocket connection count
+  - **Active check-ins** — total + unresponsive breakdown
+  - **Posts** — total noticeboard posts + pinned count
+  - **Missing persons** — total reports + missing/found breakdown
+  - **News articles** — cached article count
+  - **Map pins** — total map markers
+- Quick action buttons: Chat, Board, Info, People, Map, News (1-col mobile → 3-col desktop)
+- Pinned alerts carousel — shows pinned posts with timestamps
+- Recent activity feed — latest posts with author and timestamp
+- Community stats footer — compact numeric summary of all metrics
+- Connection status indicator — green/yellow/red dot with label
+- Admin badge when logged in
+- Skeleton loading state during data fetch
+- Automatic polling every 10–30 seconds for live updates
 
 ### 7.1 Local Network Chat
 
@@ -172,18 +196,20 @@ The next shutdown won't announce itself. And right now, nobody is ready.
 - Messages display sender name, channel, and timestamp
 - Unread message badge per channel
 - Emergency channel messages display with a red accent to indicate urgency
-- No message persistence beyond the current session (messages are in-memory on the server) — **TBD: whether to persist to SQLite**
+- Messages persisted to SQLite (last 50 messages loaded on channel join)
 - Anyone connected to the node's IP on the same network can join instantly
+- Display name modal on first chat visit
 
 ### 7.2 Community Noticeboard
 
 - Any connected user can post an alert
-- Post types (tags): **Safety, Medical, Food/Water, Legal, News, General**
+- Post types (tags): **Safety, Medical, Food/Water, Legal, News, General** — each with a distinct colour badge
 - Posts display author name, tag, timestamp, and content
 - Admin can pin posts — pinned posts always appear at the top
 - Admin can delete any post
 - Posts stored in SQLite, persist across server restarts
-- Real-time update via WebSocket push when new post is created
+- Real-time update via WebSocket push when new post is created or pinned
+- Empty state shown when no posts exist
 
 ### 7.3 Knowledge Base (Preloaded, Static)
 
@@ -199,28 +225,33 @@ Sections:
 | Crisis Checklist | 72-hour preparedness list, what to have before a shutdown |
 | July 2024 — What We Learned | Factual, documented account of what happened and what worked |
 
-- All sections available in Bangla and English with a language toggle
-- Fully cached by service worker on first load
+- All sections available in Bangla and English with a prominent language toggle in the header
+- Fully cached by service worker on first load — zero network requests after first visit
 - Search within the knowledge base (client-side, no server required)
+- Content rendered with proper typographic hierarchy (serif headings, sans-serif body)
 
 ### 7.4 Safe Check-in System
 
-- User registers: name + trusted contact phone number + check-in interval (2h, 4h, 6h, 12h)
-- User must tap "I'm safe" within their chosen interval
-- If interval is missed, user is flagged as **Unresponsive** on the noticeboard automatically
+- User registers: display name + trusted contact phone number + check-in interval (2h, 4h, 6h, 12h)
+- User must tap "I'm Safe" within their chosen interval
+- If interval is missed, user is flagged as **Unresponsive** on the admin panel automatically
 - Admin sees all registered check-in users and their current status on the admin panel
 - Optional SMS alert to contact number via Twilio (configured via env var, mocked in demo if not configured)
 - Check-in state persists in SQLite
+- Registration persisted in localStorage so returning users resume their check-in
+- Cancel & re-register option available
 
 ### 7.5 Missing Person Registry
 
-- Submit form: name, age, gender, last known location, description, contact person, contact number, optional photo upload
-- Search by name or last known location
-- Results displayed as cards with all submitted details
-- Each entry has a status: **Missing, Found, Unverified**
-- Admin can update status
+- Submit form: name, age, gender, last known location, description, contact person, contact phone
+- **Photo upload** via file picker — stored locally in `server/uploads/` directory
+- Search by name or last known location (server-side LIKE query)
+- Results displayed as cards with all submitted details and photo thumbnail
+- Each entry has a status: **Missing, Found, Unverified** — each with a coloured badge
+- Admin can update status via the admin panel
 - Entries stored in SQLite
-- When internet returns, all entries auto-sync to the remote Railway server
+- When internet returns, all unsynced entries auto-sync to the remote Railway server
+- Sync status tracked per entry (`synced` column)
 
 ### 7.6 Verified News Feed
 
@@ -232,42 +263,47 @@ Sections:
 - Frontend reads from SQLite — works fully offline after first fetch
 - Articles tagged by source, displayed in reverse chronological order
 - Manual refresh button (only works when online)
-- Last-fetched timestamp displayed so users know how stale the cache is
+- Background fetcher runs every 30 minutes while server is online
 
 ### 7.7 Offline Bangladesh Map
 
 - Bangladesh `.pmtiles` extract served locally from the backend
 - Frontend renders via MapLibre GL JS reading the local PMTiles file
-- Users can drop pins on the map (missing person last location, shelter, danger zone)
+- Users can drop pins on the map (missing person last location, shelter, danger zone, medical, general)
 - Pins saved to SQLite, visible to all connected users
 - No external tile server required — fully offline
 - Map source: OpenStreetMap via ProtoMaps basemaps
+- Map tiles distributed via download script (~540 MB), not committed to git
+- Graceful degradation: if tiles are absent, the map shows a blank background but pins still render
 
 ### 7.8 Node Admin Panel
 
-- Accessible via `/admin` route, protected by a simple admin password set in env vars
+- Accessible via `/admin` route, protected by JWT-based password authentication
 - Features:
-  - View all connected users (WebSocket connections)
-  - View all check-in statuses
-  - Pin / unpin / delete noticeboard posts
-  - Broadcast an emergency message to all connected users (appears as a full-screen banner)
-  - Update missing person entry status
-  - View sync status (what's queued, what's synced)
+  - Login screen with password input
+  - **Broadcast** — send an emergency message to all connected users (appears as full-screen overlay with red border, dismiss button)
+  - **Connected users** — view active WebSocket connection count
+  - **Check-ins** — table of all registered users with status, interval, and last check-in time
+  - **Missing persons** — list with status change buttons (Missing / Found / Unverified)
+  - **Posts** — pin/unpin/delete any noticeboard post
+  - **Dashboard quick links** — Broadcast, Check-ins, Missing Persons, Connected Users section tabs
 
 ### 7.9 Offline-First PWA
 
-- vite-plugin-pwa with Workbox generates service worker automatically
+- vite-plugin-pwa with Workbox generates service worker automatically (`injectManifest` strategy)
 - Caches: all static assets, all knowledge base pages, last-fetched news articles
 - Installable on Android Chrome and iOS Safari via "Add to Home Screen"
 - Works fully offline after first visit
-- App manifest includes Mukto Mesh name, icon, and theme colour
+- App manifest includes Mukto Mesh name, icon (192x192 + 512x512), theme colour (`#006A4E`), background colour (`#0a0a0a`), standalone display
+- Custom service worker at `src/sw.ts`
 
 ### 7.10 Auto-Sync
 
-- Background Sync API registration in service worker
+- Background sync registered in service worker
 - When connectivity is detected, queued missing person entries and map pins push to the remote Railway backend
-- Sync status visible in admin panel
 - Sync is one-directional: local → remote (the remote server is a backup, not the source of truth during offline operation)
+- Remote sync job runs every 5 minutes
+- Sync status (`synced` column in SQLite) visible in admin panel
 
 ---
 
@@ -278,9 +314,12 @@ Sections:
 ```
 Download package from GitHub
         ↓
-Run `npm start`
+Run `npm start` or double-click `start.bat`
         ↓
-App boots on localhost:3000
+[start.bat] Install dependencies (auto)
+[start.bat] Download offline map tiles if missing (auto)
+        ↓
+App boots on localhost:3000 (API + SPA + WebSocket)
         ↓
 Share local IP (e.g. 192.168.1.5:3000) with neighbours
         ↓
@@ -297,56 +336,41 @@ Connect to node operator's WiFi hotspot
         ↓
 Open browser → type node IP:3000
         ↓
-Enter display name
+Land on Dashboard → see live metrics
         ↓
-Land on dashboard → access chat / noticeboard / knowledge base / map
+Navigate to chat / noticeboard / knowledge base / map
         ↓
 [Optional] Register for check-in
-[Optional] Submit missing person report
+[Optional] Submit missing person report with photo
 ```
 
 ### 8.3 Check-in Flow
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Server
-    participant N as Noticeboard
-
-    U->>S: Register (name, contact, interval)
-    S-->>U: Confirm registration, start timer
-    loop Every [interval]
-        S->>S: Check if user checked in
-        alt Checked in
-            S-->>U: Timer resets
-        else Missed check-in
-            S->>N: Post "User [name] is unresponsive"
-            S->>U: SMS alert via Twilio (if configured)
-        end
-    end
-    U->>S: "I'm Safe" tap
-    S-->>U: Timer resets
+```
+Register (name, contact, interval)
+        ↓
+Server confirms registration, starts timer
+        ↓
+Loop every [interval]:
+    ┌─ Checked in → Timer resets
+    └─ Missed → Flagged as "Unresponsive" in admin panel
+                 SMS alert via Twilio (if configured)
+        ↓
+User taps "I'm Safe" → Timer resets
 ```
 
 ### 8.4 Missing Person Sync Flow
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant L as Local SQLite
-    participant SW as Service Worker
-    participant R as Remote Server
-
-    U->>L: Submit missing person entry
-    L-->>U: Saved locally, shown immediately
-    SW->>SW: Register background sync
-    alt Internet available
-        SW->>R: Push entry to remote
-        R-->>SW: Confirm sync
-        SW->>L: Mark entry as synced
-    else Internet unavailable
-        SW->>SW: Queue until connectivity returns
-    end
+```
+Submit missing person entry
+        ↓
+Saved to local SQLite, shown immediately
+        ↓
+Service Worker registers background sync
+        ↓
+[Internet available] → Push to remote Railway server
+                       Mark entry as synced
+[Internet unavailable] → Queue until connectivity returns
 ```
 
 ---
@@ -359,20 +383,27 @@ sequenceDiagram
 │         (any phone/laptop on same WiFi)             │
 │              React 19 PWA (Vite)                    │
 │         Service Worker (Workbox) + Cache            │
+│    Noto Serif Bengali + Noto Sans Bengali fonts     │
 └──────────────────────┬──────────────────────────────┘
                        │ HTTP + WebSocket (LAN)
 ┌──────────────────────▼──────────────────────────────┐
 │               NODE OPERATOR'S LAPTOP                │
 │                                                     │
 │   Hono.js Server (Node.js 22 LTS)                  │
-│   ├── REST API (noticeboard, missing persons,       │
-│   │             check-in, news, map pins)           │
-│   ├── WebSocket Server (chat, live updates)         │
+│   ├── REST API (posts, missing, check-in, news,     │
+│   │             pins, admin, messages, status)      │
+│   ├── WebSocket Server (chat, live WS events)       │
 │   ├── PMTiles Server (Bangladesh map tiles)         │
-│   └── Static file server (built React app)         │
+│   ├── Uploads Server (missing person photos)        │
+│   └── Static file server (built React app)          │
 │                                                     │
 │   SQLite (better-sqlite3)                           │
 │   └── Single file: mukto_mesh.db                   │
+│                                                     │
+│   Background Jobs:                                  │
+│   ├── Check-in Monitor (runs every 60s)             │
+│   ├── News Fetcher (runs every 30 min)              │
+│   └── Remote Sync (runs every 5 min)                │
 └──────────────────────┬──────────────────────────────┘
                        │ HTTPS (when internet exists)
 ┌──────────────────────▼──────────────────────────────┐
@@ -394,13 +425,16 @@ sequenceDiagram
 |---|---|---|
 | Framework | React 19 | Stable, widely supported |
 | Build tool | Vite | Fast HMR, excellent PWA plugin |
-| Language | TypeScript | Type safety throughout |
-| Styling | Tailwind CSS | Utility-first, fast to build |
-| Components | shadcn/ui | Accessible, unstyled by default, Tailwind-compatible |
-| PWA | vite-plugin-pwa + Workbox | Zero-config service worker, offline caching |
-| Maps | MapLibre GL JS + PMTiles JS | Offline tile rendering |
+| Language | TypeScript (strict mode) | Type safety throughout |
+| Styling | Tailwind CSS 3 | Utility-first, fast to build |
+| Design tokens | Custom OKLCH CSS custom properties (50+ tokens) | Perceptual colour, semantic naming |
+| Fonts | Noto Serif Bengali + Noto Sans Bengali (Google Fonts) | Proper Bangla glyph rendering |
+| Icons | lucide-react | Lightweight, consistent icon set |
+| PWA | vite-plugin-pwa + Workbox (injectManifest) | Zero-config service worker, offline caching |
+| Maps | MapLibre GL JS + PMTiles JS | Offline tile rendering from local PMTiles |
 | State | Zustand | Lightweight, no boilerplate |
-| Data fetching | TanStack Query (React Query) | Cache management, background sync awareness |
+| Data fetching | TanStack Query (React Query) | Cache management, background refetching |
+| Routing | react-router-dom v7 | Standard SPA routing |
 | WebSocket client | Native browser WebSocket API | No library needed |
 
 ### Backend
@@ -408,11 +442,13 @@ sequenceDiagram
 |---|---|---|
 | Framework | Hono.js | TypeScript-first, built-in WebSocket, lightweight |
 | Runtime | Node.js 22 LTS | Stable, widely supported |
-| Language | TypeScript | Consistent with frontend |
+| Language | TypeScript (strict mode) | Consistent with frontend |
 | Database | SQLite via better-sqlite3 | Zero setup, single file, runs anywhere |
-| RSS parsing | rss-parser (npm) | Lightweight, no dependencies |
-| PMTiles serving | @protomaps/serve or static file serve | Serves .pmtiles locally |
+| WebSocket | ws | Lightweight, no dependencies |
+| RSS parsing | rss-parser | Lightweight, no dependencies |
+| JWT | jsonwebtoken | Admin authentication |
 | SMS | Twilio SDK (optional) | Check-in alerts, mocked in demo |
+| PMTiles serving | Static file serve via @hono/node-server/serve-static | Serves .pmtiles with HTTP Range support |
 
 ### Infrastructure
 | Layer | Choice |
@@ -425,10 +461,9 @@ sequenceDiagram
 ### Tooling
 | Tool | Purpose |
 |---|---|
-| ESLint + Prettier | Linting and formatting |
-| tsx | Run TypeScript directly in Node |
+| ESLint | Linting |
+| tsx | Run TypeScript directly in Node (dev mode) |
 | concurrently | Run client and server together in dev |
-| pkg or Bun (TBD) | Bundle into single executable for distribution |
 
 ---
 
@@ -453,11 +488,12 @@ CREATE TABLE messages (
   display_name TEXT NOT NULL,
   channel TEXT NOT NULL,         -- 'general' | 'emergency' | 'coordination' | 'medical'
   content TEXT NOT NULL,
-  created_at INTEGER NOT NULL,
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  created_at INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_messages_channel ON messages(channel);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
 ```
-> **Note:** TBD whether messages persist or remain in-memory only. See Section 29.
+> Messages are persisted to SQLite. On channel join, the last 50 messages are loaded.
 
 ### posts (noticeboard)
 ```sql
@@ -470,7 +506,9 @@ CREATE TABLE posts (
   pinned INTEGER DEFAULT 0,      -- 0 | 1
   created_at INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at);
 ```
+> Posts are returned ordered by `pinned DESC, created_at DESC`.
 
 ### checkins
 ```sql
@@ -496,11 +534,12 @@ CREATE TABLE missing_persons (
   description TEXT,
   contact_name TEXT NOT NULL,
   contact_phone TEXT NOT NULL,
-  photo_url TEXT,                -- local path or null
+  photo_url TEXT,                -- local path or null (stored in server/uploads/)
   status TEXT DEFAULT 'missing', -- 'missing' | 'found' | 'unverified'
   synced INTEGER DEFAULT 0,      -- 0 | 1
   created_at INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_missing_status ON missing_persons(status);
 ```
 
 ### news_articles
@@ -514,6 +553,7 @@ CREATE TABLE news_articles (
   published_at INTEGER,
   fetched_at INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_news_fetched_at ON news_articles(fetched_at);
 ```
 
 ### map_pins
@@ -538,76 +578,92 @@ CREATE TABLE map_pins (
 Base URL (local): `http://[node-ip]:3000/api`
 Base URL (remote): `https://[railway-url]/api`
 
+### Public (no auth)
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Health check — returns `{ status: 'ok', timestamp }` |
+| GET | `/api/status` | Node status — connection count + check-in summary for Dashboard |
+
 ### Noticeboard
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/posts` | Get all posts, pinned first |
-| POST | `/posts` | Create a new post |
-| PATCH | `/posts/:id/pin` | Toggle pin (admin only) |
-| DELETE | `/posts/:id` | Delete post (admin only) |
+| GET | `/api/posts` | Get all posts, pinned first |
+| POST | `/api/posts` | Create a new post (body: `{ display_name, user_id?, tag, content }`) |
+| PATCH | `/api/posts/:id/pin` | Toggle pin (admin only) |
+| DELETE | `/api/posts/:id` | Delete post (admin only) |
+
+### Messages (chat)
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/messages?channel=general` | Get last 50 messages for a channel |
 
 ### Missing Persons
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/missing` | Get all entries |
-| POST | `/missing` | Submit new entry |
-| PATCH | `/missing/:id/status` | Update status (admin only) |
-| GET | `/missing/search?q=` | Search by name or location |
+| GET | `/api/missing` | Get all entries |
+| GET | `/api/missing/search?q=` | Search by name or location |
+| POST | `/api/missing` | Submit new entry (supports `multipart/form-data` with photo upload) |
+| PATCH | `/api/missing/:id/status` | Update status (admin only) |
 
 ### Check-in
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/checkin/register` | Register for check-in |
-| POST | `/checkin/ping` | "I'm Safe" action |
-| GET | `/checkin/status` | Get all check-in statuses (admin) |
+| POST | `/api/checkin/register` | Register for check-in |
+| GET | `/api/checkin/lookup/:id` | Get check-in status by ID (public) |
+| POST | `/api/checkin/ping` | "I'm Safe" action |
+| GET | `/api/checkin/status` | Get all check-in statuses (admin only) |
 
 ### News
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/news` | Get cached articles |
-| POST | `/news/refresh` | Trigger RSS fetch (online only) |
+| GET | `/api/news` | Get cached articles |
+| POST | `/api/news/refresh` | Trigger RSS fetch (online only) |
 
 ### Map Pins
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/pins` | Get all pins |
-| POST | `/pins` | Add a pin |
-| DELETE | `/pins/:id` | Delete a pin (admin only) |
+| GET | `/api/pins` | Get all pins |
+| POST | `/api/pins` | Add a pin |
+| DELETE | `/api/pins/:id` | Delete a pin (admin only) |
 
 ### Sync (remote server only)
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/sync/missing` | Bulk sync missing person entries |
-| POST | `/sync/pins` | Bulk sync map pins |
+| POST | `/api/sync/missing` | Bulk sync missing person entries |
+| POST | `/api/sync/pins` | Bulk sync map pins |
 
 ### Admin
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/admin/broadcast` | Send emergency broadcast to all WS clients |
-| GET | `/admin/connections` | Get active WebSocket connection count |
+| POST | `/api/admin/login` | Login (body: `{ password }`) → returns JWT |
+| GET | `/api/admin/connections` | Get active WebSocket connection count (admin only) |
+| POST | `/api/admin/broadcast` | Send emergency broadcast to all WS clients (body: `{ message }`) |
 
-### WebSocket
+### WebSocket (`ws://[node-ip]:3000/ws`)
 
 | Event (client → server) | Payload | Description |
 |---|---|---|
-| `join` | `{ displayName, channel }` | Join a channel |
+| `join` | `{ displayName, channel? }` | Join a channel (default: `general`) |
 | `message` | `{ channel, content }` | Send a message |
 | `switch_channel` | `{ channel }` | Switch active channel |
 
 | Event (server → client) | Payload | Description |
 |---|---|---|
-| `message` | `{ id, displayName, channel, content, createdAt }` | New message |
-| `post_created` | Post object | New noticeboard post |
-| `post_pinned` | `{ id, pinned }` | Post pin toggled |
-| `checkin_flagged` | `{ displayName }` | User flagged as unresponsive |
-| `broadcast` | `{ message }` | Admin emergency broadcast |
+| `join_ack` | `{ channel, messages[] }` | Acknowledge join, send last 50 messages |
+| `message` | `{ id, displayName, channel, content, createdAt }` | New message broadcast to channel |
+| `post_created` | `{ type: 'post_created', post }` | New noticeboard post (broadcast to all) |
+| `post_pinned` | `{ type: 'post_pinned', id, pinned }` | Post pin toggled (broadcast to all) |
+| `checkin_flagged` | `{ type: 'checkin_flagged', displayName }` | User flagged as unresponsive |
+| `broadcast` | `{ type: 'broadcast', message, createdAt }` | Admin emergency broadcast |
 
 ---
 
@@ -617,22 +673,36 @@ Base URL (remote): `https://[railway-url]/api`
 mukto-mesh/
 ├── client/                          # React 19 + Vite frontend
 │   ├── public/
-│   │   ├── icons/                   # PWA icons
-│   │   ├── bangladesh.pmtiles       # Bangladesh map tiles (committed to repo)
-│   │   └── manifest.webmanifest
+│   │   ├── icons/                   # PWA icons (192x192, 512x512)
+│   │   └── tiles/                   # Bangladesh PMTiles map (gitignored, ~540 MB)
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── ui/                  # shadcn/ui components
+│   │   │   ├── Admin/
+│   │   │   │   └── AdminLogin.tsx
 │   │   │   ├── Chat/
-│   │   │   ├── Noticeboard/
-│   │   │   ├── KnowledgeBase/
+│   │   │   │   ├── ChannelTab.tsx
+│   │   │   │   └── MessageBubble.tsx
 │   │   │   ├── CheckIn/
-│   │   │   ├── MissingPersons/
-│   │   │   ├── NewsFeed/
+│   │   │   │   ├── CheckInForm.tsx
+│   │   │   │   └── CheckInStatus.tsx
 │   │   │   ├── Map/
-│   │   │   └── Admin/
+│   │   │   │   ├── AddPinForm.tsx
+│   │   │   │   ├── Map.css
+│   │   │   │   └── PinMarker.tsx
+│   │   │   ├── MissingPersons/
+│   │   │   │   └── MissingPersonForm.tsx
+│   │   │   ├── Noticeboard/
+│   │   │   │   ├── NewPostForm.tsx
+│   │   │   │   └── PostCard.tsx
+│   │   │   ├── DisplayNameModal.tsx
+│   │   │   ├── ErrorBoundary.tsx
+│   │   │   ├── InstallPrompt.tsx
+│   │   │   ├── LanguageToggle.tsx
+│   │   │   ├── Layout.tsx
+│   │   │   ├── OfflineBadge.tsx
+│   │   │   └── Toast.tsx
 │   │   ├── pages/
-│   │   │   ├── Dashboard.tsx
+│   │   │   ├── Dashboard.tsx        # Landing page with crisis metrics
 │   │   │   ├── Chat.tsx
 │   │   │   ├── Noticeboard.tsx
 │   │   │   ├── KnowledgeBase.tsx
@@ -642,16 +712,11 @@ mukto-mesh/
 │   │   │   ├── Map.tsx
 │   │   │   └── Admin.tsx
 │   │   ├── content/                 # Preloaded knowledge base content
-│   │   │   ├── rights.bn.md
-│   │   │   ├── rights.en.md
-│   │   │   ├── firstaid.bn.md
-│   │   │   ├── firstaid.en.md
-│   │   │   ├── contacts.bn.md
-│   │   │   ├── contacts.en.md
-│   │   │   ├── checklist.bn.md
-│   │   │   ├── checklist.en.md
-│   │   │   ├── july2024.bn.md
-│   │   │   └── july2024.en.md
+│   │   │   ├── rights.bn.md / rights.en.md
+│   │   │   ├── firstaid.bn.md / firstaid.en.md
+│   │   │   ├── contacts.bn.md / contacts.en.md
+│   │   │   ├── checklist.bn.md / checklist.en.md
+│   │   │   └── july2024.bn.md / july2024.en.md
 │   │   ├── store/                   # Zustand stores
 │   │   │   ├── useAuthStore.ts
 │   │   │   ├── useChatStore.ts
@@ -660,46 +725,78 @@ mukto-mesh/
 │   │   │   ├── useWebSocket.ts
 │   │   │   └── useOfflineStatus.ts
 │   │   ├── lib/
-│   │   │   ├── api.ts               # Axios/fetch wrapper
-│   │   │   └── sync.ts              # Background sync registration
-│   │   ├── App.tsx
+│   │   │   ├── api.ts               # Fetch wrapper with JSON/FormData support
+│   │   │   ├── config.ts            # VITE_API_URL, VITE_WS_URL
+│   │   │   ├── constants.ts
+│   │   │   ├── md.ts                # Markdown rendering
+│   │   │   ├── utils.ts             # timeAgo, etc.
+│   │   │   └── ws.tsx               # WebSocket connection manager + Zustand store
+│   │   ├── styles/
+│   │   │   └── tokens.css           # 50+ OKLCH design tokens
+│   │   ├── App.tsx                  # Router + broadcast overlay
 │   │   ├── main.tsx
-│   │   └── sw.ts                    # Custom service worker additions
+│   │   ├── index.css                # Tailwind directives + base + utilities
+│   │   └── sw.ts                    # Custom service worker (injectManifest)
+│   ├── tailwind.config.ts           # Token mappings
 │   ├── vite.config.ts
-│   ├── tailwind.config.ts
 │   ├── tsconfig.json
 │   └── package.json
 │
 ├── server/                          # Hono.js backend
 │   ├── src/
 │   │   ├── db/
-│   │   │   ├── schema.ts            # SQLite table definitions
-│   │   │   └── index.ts             # DB connection singleton
+│   │   │   ├── schema.ts            # SQLite table definitions (CREATE TABLE IF NOT EXISTS)
+│   │   │   ├── index.ts             # DB connection singleton + initDB
+│   │   │   ├── posts.ts
+│   │   │   ├── messages.ts
+│   │   │   ├── checkins.ts
+│   │   │   ├── missing.ts
+│   │   │   ├── news.ts
+│   │   │   ├── pins.ts
+│   │   │   └── users.ts
 │   │   ├── routes/
 │   │   │   ├── posts.ts
 │   │   │   ├── missing.ts
 │   │   │   ├── checkin.ts
 │   │   │   ├── news.ts
 │   │   │   ├── pins.ts
+│   │   │   ├── messages.ts
 │   │   │   ├── sync.ts
 │   │   │   └── admin.ts
 │   │   ├── ws/
-│   │   │   └── chat.ts              # WebSocket handler
+│   │   │   └── chat.ts              # WebSocket handler + broadcast helpers
 │   │   ├── jobs/
-│   │   │   ├── checkinMonitor.ts    # Interval checker for missed check-ins
-│   │   │   └── newsFetcher.ts       # RSS fetch job
+│   │   │   ├── checkinMonitor.ts    # Interval checker for missed check-ins (every 60s)
+│   │   │   └── newsFetcher.ts       # RSS fetch job (every 30 min)
+│   │   ├── integrations/
+│   │   │   ├── remoteSync.ts        # Auto-sync to remote Railway server (every 5 min)
+│   │   │   └── twilio.ts            # Optional SMS via Twilio
 │   │   ├── middleware/
-│   │   │   └── adminAuth.ts         # Admin password check
-│   │   └── index.ts                 # App entry point
-│   ├── mukto_mesh.db                # SQLite file (gitignored)
+│   │   │   └── adminAuth.ts         # JWT verification middleware
+│   │   ├── config.ts
+│   │   ├── logger.ts
+│   │   ├── types.ts                 # WsEvent enum, ApiResponse type
+│   │   └── index.ts                 # App entry point — routes, WS, jobs, static files, health
+│   ├── dist/                        # Compiled JS (production)
+│   ├── uploads/                     # Missing person photo uploads
 │   ├── tsconfig.json
 │   └── package.json
 │
+├── scripts/
+│   ├── download-tiles.ps1           # PowerShell script to download Bangladesh PMTiles
+│   └── download-tiles.sh            # Bash script to download Bangladesh PMTiles
+│
+├── context/
+│   ├── spec.md                      # This file
+│   ├── design.md                    # Design system documentation
+│   └── api-contract.md              # API contract details
+│
+├── start.bat                        # One-click Windows launcher (auto-installs deps + downloads tiles)
 ├── .env.example                     # Template for environment variables
 ├── .gitignore
 ├── package.json                     # Root package.json with concurrently scripts
 ├── README.md                        # Setup and run instructions
-└── SPEC.md                          # This file
+└── LICENSE                          # MIT
 ```
 
 ---
@@ -707,7 +804,7 @@ mukto-mesh/
 ## 14. Coding Standards and Architectural Principles
 
 - **TypeScript strict mode** enabled in both client and server `tsconfig.json`
-- **No `any` types** — use `unknown` and narrow properly
+- **Minimize `any` types** — prefer `unknown`, proper generics, and type narrowing. Current status: 1 remaining `any` in `useWebSocket` hook (acceptable utility pattern)
 - **File naming:** `PascalCase` for components, `camelCase` for utilities and hooks
 - **Imports:** absolute imports via `@/` alias in both client and server
 - **API responses:** always return `{ data, error }` shape — never throw raw errors to client
@@ -717,11 +814,18 @@ mukto-mesh/
 - **No squashing:** never squash commits at deadline
 - **Open source licence:** MIT (as required by Track A guidelines)
 
+### Component Design
+- All interactive components enforce minimum 44px tap targets
+- Focus-visible ring for keyboard navigation using OKLCH tokens
+- Reduced motion support via `prefers-reduced-motion: reduce` media query
+- Component utility classes (`card`, `card-hover`, `btn-primary`, `btn-ghost`, `input-field`, `section-label`, `error-state`, `empty-state`, `skeleton`) defined in `index.css`
+- No inline hex or rgba values — all colours derived from OKLCH CSS variables
+
 ---
 
 ## 15. Configuration and Environment Variables
 
-Copy `.env.example` to `.env` in both `/client` and `/server`.
+Copy `.env.example` to `.env` in `/server`.
 
 ### Server (`server/.env`)
 
@@ -729,10 +833,10 @@ Copy `.env.example` to `.env` in both `/client` and `/server`.
 PORT=3000
 NODE_ENV=development
 
-# Admin panel password
+# Admin panel password — CHANGE BEFORE PRODUCTION
 ADMIN_PASSWORD=changeme
 
-# Twilio (optional — mock SMS if not set)
+# Twilio (optional — SMS alerts for check-in; mocked if not set)
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_PHONE_NUMBER=
@@ -744,7 +848,7 @@ REMOTE_SYNC_URL=https://your-railway-app.railway.app
 DB_PATH=./mukto_mesh.db
 ```
 
-### Client (`client/.env`)
+### Client (`client/.env.example`)
 
 ```env
 VITE_API_URL=http://localhost:3000
@@ -761,11 +865,13 @@ VITE_WS_URL=ws://localhost:3000/ws
   ```ts
   { data: T | null, error: string | null }
   ```
-- Frontend uses TanStack Query error boundaries to handle failed requests gracefully
-- When offline, API calls fail silently and the UI shows a cached state with an "Offline" badge
-- WebSocket disconnections trigger an automatic reconnection with exponential backoff (max 5 retries)
-- SQLite errors are caught and logged server-side; a 500 response is returned with a generic error message (never expose DB internals)
+- Frontend uses TanStack Query error states to handle failed requests gracefully
+- When offline, API calls return `{ data: null, error: 'Network error — you may be offline' }` and the UI shows cached state with an Offline badge
+- WebSocket disconnections trigger automatic reconnection with exponential backoff
+- SQLite errors are caught and logged server-side; a 500 response is returned with a generic error message
 - Missing person photo upload failures do not block the form submission — photo is optional
+- Server-level `onError` handler catches all uncaught errors and returns 500
+- Uncaught exceptions and unhandled promise rejections are logged at process level
 
 ---
 
@@ -775,10 +881,10 @@ VITE_WS_URL=ws://localhost:3000/ws
 
 **Admin authorisation:**
 - Admin panel at `/admin` is protected by a simple password check
-- Password is set via `ADMIN_PASSWORD` env var
+- Password is set via `ADMIN_PASSWORD` env var (default: `changeme` — warning printed at startup)
 - On POST to `/api/admin/login`, server returns a short-lived JWT (24h expiry)
 - JWT stored in `localStorage`, sent as `Authorization: Bearer` header on admin requests
-- Admin middleware on Hono validates the JWT on every admin route
+- Admin middleware on Hono validates the JWT on every admin-protected route
 
 **Assumption:** For a 72h hackathon sprint, this is sufficient. A full RBAC system is a future enhancement.
 
@@ -788,9 +894,10 @@ VITE_WS_URL=ws://localhost:3000/ws
 
 | State type | Solution |
 |---|---|
-| Server state (API data) | TanStack Query — handles caching, refetching, offline awareness |
-| Global UI state (language, user name, admin status) | Zustand stores |
-| WebSocket state (messages, active channel) | Zustand chat store, updated by `useWebSocket` hook |
+| Server state (API data) | TanStack Query — caching, refetching, polling (10–60s intervals) |
+| Global UI state (language, user name, admin status) | Zustand stores (`useAuthStore`, `useLanguageStore`) |
+| Chat state (messages, unread counts, active channel) | Zustand `useChatStore`, updated by WebSocket hook |
+| WebSocket connection state (status, broadcast) | Zustand store in `ws.tsx` — `useWs` |
 | Form state | React `useState` — no form library needed at this scale |
 | Offline/online status | `useOfflineStatus` hook wrapping `navigator.onLine` + event listeners |
 
@@ -800,16 +907,37 @@ VITE_WS_URL=ws://localhost:3000/ws
 
 ### Theme
 - **Dark theme only** — optimised for night-time crisis use and low battery consumption on OLED screens
-- **Colour palette:**
-  - Background: `#0a0a0a`
-  - Surface: `#141414`
-  - Border: `#262626`
-  - Primary accent: `#006A4E` (Bangladesh green)
-  - Danger accent: `#C8102E` (Bangladesh red)
-  - Text primary: `#f5f5f5`
-  - Text muted: `#737373`
-- **Typography:** System font stack — no web fonts to avoid network dependency
-- **Border radius:** `0.375rem` (subtle, not rounded)
+- **Colour palette:** OKLCH perceptual colour model with 50+ semantic tokens
+  - Paper (background): `oklch(0.035 0.004 270)` — near-black
+  - Surface (cards): `oklch(0.105 0.008 270)` — slightly lighter
+  - Accent (Bangladesh green): `oklch(0.45 0.14 170)` — hover: `oklch(0.50 0.16 170)`, muted: `oklch(0.45 0.14 170 / 0.12)`, text: `oklch(0.75 0.14 170)`
+  - Danger (Bangladesh red): `oklch(0.45 0.22 30)`
+  - Success: `oklch(0.55 0.16 145)`
+  - Warning: `oklch(0.65 0.15 85)`
+  - Text primary: `oklch(0.93 0.006 270)`
+  - Text muted: `oklch(0.55 0.018 270)`
+  - Full token set: paper, paper-alt, surface, surface-hover, elevated, border, border-hover, accent, accent-hover, accent-muted, accent-text, danger, danger-hover, danger-muted, success, success-muted, warning, warning-muted, text, text-heading, text-muted, text-dim, text-inverse, focus, pin colours, tag badge colours
+
+- **Typography:**
+  - Display/headings: `Noto Serif Bengali` (serif) — weight 700
+  - Body: `Noto Sans Bengali` (sans-serif) — weight 400/500/600/700
+  - Mono: `JetBrains Mono` (code fragments)
+  - Type scale: display (`clamp(1.625rem, 4vw, 2.5rem)`), heading (`clamp(1.125rem, 2.5vw, 1.5rem)`), subhead, body (0.875rem), small, caption, micro
+
+- **Spacing:** 4pt scale (0.25rem increments)
+- **Border radius:** sm (0.25rem), default (0.375rem), lg (0.5rem), pill (9999px)
+- **Motion:** Three easings (ease-out, ease-in, ease-in-out) + three durations (fast 150ms, normal 250ms, slow 400ms). Full `prefers-reduced-motion: reduce` support globally.
+
+### Component Utilities (defined in `index.css`)
+- `card` — Standard surface card with border
+- `card-hover` — Card with hover elevation effect
+- `btn-primary` — Primary action button (green accent background)
+- `btn-ghost` — Ghost/outline button
+- `input-field` — Text input with focus ring
+- `section-label` — Section heading with accent underline
+- `error-state` — Error message box with muted danger background
+- `empty-state` — Empty state placeholder
+- `skeleton` — Skeleton loading animation
 
 ### Design Principles
 - **Function over form** — every UI element serves a crisis use case
@@ -819,23 +947,28 @@ VITE_WS_URL=ws://localhost:3000/ws
 - **Empty states** — every list has a meaningful empty state with a call to action
 - **Error states** — specific, actionable, never generic "Something went wrong"
 - **Offline badge** — a persistent banner when the node detects no internet, reassuring users that offline mode is intentional and everything still works
+- **Skeleton loading** — Dashboard shows animated skeleton placeholders during data fetch
+- **Serif for headings** — Noto Serif Bengali for all h1–h3 to establish typographic hierarchy
 
 ### Navigation
-- Bottom navigation bar on mobile (5 items: Chat, Board, Info, People, Map)
-- Sidebar on desktop
-- Admin panel accessible via a lock icon in the corner, not in the main nav
+- Bottom navigation bar on mobile (6 items: Dashboard, Chat, Board, Info, People, Map) — hidden on desktop
+- Sidebar on desktop (1024px+) — hidden on mobile
+- Admin panel accessible via `/admin` route (button in Dashboard header)
+- News accessible via Dashboard quick action (not in bottom nav)
 
 ---
 
 ## 20. Performance Considerations
 
 - All knowledge base content is `.md` files compiled at build time — zero runtime fetch
-- Bangladesh `.pmtiles` file is committed to the repo and served as a static asset — no tile API calls
+- Bangladesh `.pmtiles` file is served as a static asset with HTTP Range support — no tile API calls
 - News articles cached in SQLite — news page loads instantly from DB even offline
-- TanStack Query stale-while-revalidate — UI never blocks on a network request
+- Dashboard data fetched via polling with TanStack Query — UI never blocks
 - Service worker pre-caches all routes on install — navigation is instant
 - WebSocket connections are pooled — the server handles up to ~100 concurrent connections comfortably on a laptop
-- SQLite queries use indexes on `created_at` and `status` columns for fast retrieval
+- SQLite queries use indexes on `channel`, `created_at`, `status`, and `fetched_at` columns
+- Lazy-loaded page components via `React.lazy` + `Suspense` — code-split by route
+- OKLCH tokens in CSS custom properties — no runtime colour computation
 
 ---
 
@@ -846,20 +979,20 @@ VITE_WS_URL=ws://localhost:3000/ws
 - **SQL injection** — all queries use parameterised statements via better-sqlite3 prepared statements
 - **XSS** — React's default JSX escaping handles this; no `dangerouslySetInnerHTML` usage
 - **CORS** — in production, backend restricts CORS to the Vercel frontend origin
-- **No surveillance** — the app explicitly does not log IP addresses or track user behaviour. This is stated in the README and the onboarding screen.
-- **Photo uploads** — stored locally only, not transmitted to any third party
+- **No surveillance** — the app explicitly does not log IP addresses or track user behaviour
+- **Photo uploads** — stored locally in `server/uploads/`, not transmitted to any third party
 
 ---
 
 ## 22. Logging and Monitoring
 
 **Development:**
-- `console.log` via `tsx` with timestamps
+- Structured logger with timestamps (`[timestamp] [level] message`)
+- Request logging: `[method] [path] [status] [duration]`
 - SQLite query errors logged to stderr
 
 **Production (Railway):**
 - Railway's built-in log streaming is sufficient for hackathon purposes
-- Log format: `[timestamp] [level] [route] message`
 - Log levels: `INFO`, `WARN`, `ERROR`
 
 **No external monitoring service** — out of scope for 72h sprint.
@@ -868,17 +1001,21 @@ VITE_WS_URL=ws://localhost:3000/ws
 
 ## 23. Testing Strategy
 
-Given the 72h constraint, formal testing is minimal but targeted:
+Given the 72h constraint, formal testing is manual but comprehensive:
 
-| Type | Scope | Tool |
+| Type | Scope | How |
 |---|---|---|
-| Manual | All features, tested on a real phone over LAN | Browser DevTools |
-| Offline simulation | Kill WiFi, verify all core features work | Browser DevTools → Network → Offline |
+| TypeScript type check | All files | `npx tsc --noEmit` — 0 errors (client + server) |
+| Production build | Client | `npm run build` — Vite outputs 27 files, ~1.2 MB |
+| Production build | Server | `tsc` — compiles to `dist/index.js` |
+| Manual | All features, tested on real devices over LAN | Browser DevTools |
+| Offline simulation | Kill WiFi, verify core features work | Browser DevTools → Network → Offline |
 | WebSocket | Send messages from two browser tabs | Manual |
-| PWA install | Verify install prompt appears on Android Chrome | Manual |
-| API smoke test | Hit each endpoint via curl or Hono test client | Manual / curl |
+| PWA install | Verify install prompt on Android Chrome | Manual |
+| API smoke test | Hit each endpoint via curl | Manual / curl |
+| Responsive | Test at 320/375/414/768/1024px | Browser DevTools responsive mode |
 
-**No automated tests in the hackathon sprint.** This is explicitly noted as a trade-off. See Section 27.
+**No automated unit tests in the hackathon sprint.** This is a known trade-off (see Section 27).
 
 ---
 
@@ -887,12 +1024,21 @@ Given the 72h constraint, formal testing is minimal but targeted:
 ### Local (node operator)
 
 ```bash
-git clone https://github.com/[team]/mukto-mesh
+git clone https://github.com/HyperZx2O/mukto-mesh
 cd mukto-mesh
-npm install
-npm start
+start.bat                    # Windows — one-click launcher
+# or
+npm install                  # Manual
+npm run dev                  # Starts both server + client
 # App available at http://localhost:3000
 # Share http://[your-local-ip]:3000 with neighbours
+```
+
+### Production mode (single port, built assets)
+
+```bash
+npm run build                # Builds client + server
+npm start                    # Serves everything from port 3000
 ```
 
 ### Online (Railway + Vercel)
@@ -902,7 +1048,6 @@ npm start
 2. Set root directory to `/server`
 3. Set env vars via Railway dashboard
 4. Railway auto-deploys on push to `main`
-5. Note the Railway URL → set as `REMOTE_SYNC_URL` in local `.env`
 
 **Frontend (Vercel):**
 1. Connect GitHub repo to Vercel
@@ -916,45 +1061,45 @@ After the sprint:
 1. Run `npm run build` in both `/client` and `/server`
 2. Bundle into a zip: server build + client build served as static files from server
 3. Tag a GitHub release: `v1.0.0-july-hackathon`
-4. Attach the zip — anyone downloads and runs `npm start`
-
-**TBD:** Whether to use `pkg` or Bun to compile into a zero-dependency executable. See Section 29.
+4. Attach the zip — anyone downloads and runs `npm start` or `start.bat`
+5. Map tiles (~540 MB) distributed separately via download scripts
 
 ---
 
-## 25. Development Roadmap and Milestones
+## 25. Development Milestones
 
-### Sequential build order (72h sprint)
+All features completed within the 72-hour sprint (July 28–30, 2026):
 
-**Phase 1 — Foundation**
-- [ ] Monorepo setup, TypeScript config, concurrently dev script
-- [ ] Hono server with SQLite connection
-- [ ] React + Vite + Tailwind + shadcn/ui scaffold
-- [ ] PWA manifest and vite-plugin-pwa config
+### Foundation
+- [x] Monorepo setup, TypeScript config, concurrently dev script
+- [x] Hono server with SQLite connection
+- [x] React + Vite + Tailwind scaffold
+- [x] PWA manifest and vite-plugin-pwa config
 
-**Phase 2 — Core features**
-- [ ] WebSocket server + chat UI
-- [ ] Noticeboard REST API + UI
-- [ ] Knowledge base static content (write all Bangla + English content)
-- [ ] Knowledge base pages in React
+### Core Features
+- [x] WebSocket server + chat UI (4 channels)
+- [x] Noticeboard REST API + UI (6 tags, pin/delete)
+- [x] Knowledge base — write all Bangla + English content (5 sections)
+- [x] Knowledge base pages with search and language toggle
 
-**Phase 3 — Secondary features**
-- [ ] Check-in system backend + UI
-- [ ] Missing person registry backend + UI
-- [ ] News feed fetcher + cache + UI
-- [ ] ProtoMaps integration (tile serving + MapLibre GL JS)
+### Secondary Features
+- [x] Check-in system backend + UI (register, ping, monitor)
+- [x] Missing person registry with photo upload
+- [x] News feed fetcher (3 sources) + cache + UI
+- [x] Offline map (PMTiles + MapLibre GL JS)
+- [x] Dashboard with live metrics and quick actions
 
-**Phase 4 — Polish and ship**
-- [ ] Admin panel
-- [ ] Auto-sync (Background Sync API)
-- [ ] Offline badge and offline UX polish
-- [ ] Language toggle (Bangla / English)
-- [ ] Bug fixes, mobile testing
-- [ ] README with setup instructions
-- [ ] Demo video (3 minutes max)
-- [ ] Slide deck (6–10 slides, PDF)
-- [ ] Facebook post with `#JulyHackathon2026`
-- [ ] Submit on hackathon2026.jrabd.org before July 30 23:59 BST
+### Polish and Ship
+- [x] Admin panel (login, broadcast, connections, check-ins, missing, posts)
+- [x] Auto-sync to remote Railway server
+- [x] Offline badge and offline UX polish
+- [x] Language toggle (Bangla / English)
+- [x] OKLCH design system with 50+ tokens
+- [x] Component utility classes (btn-primary, card, etc.)
+- [x] Bug fixes, mobile testing at 4 breakpoints
+- [x] README with full documentation
+- [x] start.bat one-click launcher
+- [x] Download scripts for offline map tiles
 
 ---
 
@@ -973,6 +1118,8 @@ These were discussed but are explicitly out of scope for the hackathon sprint:
 - **Satellite SMS integration** — Twilio for check-in alerts when mobile networks exist but internet doesn't
 - **Damage reporting** — geotagged incident reports with photo upload
 - **Federated node sync** — nodes that know about each other and can relay data when internet is intermittent
+- **Sentiment analysis on broadcasts** — gauge community morale during crisis
+- **Resource tracking** — log available food, water, medicine at shelter locations
 
 ---
 
@@ -981,17 +1128,20 @@ These were discussed but are explicitly out of scope for the hackathon sprint:
 | Item | Detail |
 |---|---|
 | **Build window** | 72 hours: July 28 00:00 to July 30 23:59 BST |
-| **Team size** | 2 members |
-| **No automated tests** | Trade-off for speed. Manual testing only during sprint. |
+| **Team size** | 2 members (with AI coding assistance via OpenCode) |
+| **No automated unit tests** | Trade-off for speed. Manual + typecheck + build validation only. |
 | **No user auth** | Display name only. Acceptable for crisis coordination context. |
 | **Admin password simplicity** | JWT with single shared password. Not enterprise-grade. Acceptable for scope. |
 | **LAN-only during blackout** | By design and by physics. Multiple nodes across the country is the solution, not a single national server. |
 | **Node operator laptop must stay on** | Single point of failure per node. Acceptable for hackathon; future mitigation is a Raspberry Pi distribution. |
-| **Bangladesh .pmtiles file size** | Bangladesh extract is approximately 200–400MB. This must be committed to the repo or bundled in the release. Git LFS may be required. |
-| **RSS feed availability** | Bangla news RSS feeds may be unreliable or require scraping. The news feature degrades gracefully if feeds are unavailable. |
+| **Bangladesh .pmtiles file size** | ~540 MB. Distributed via download script, not committed to git. App degrades gracefully without tiles (blank map, pins still work). |
+| **RSS feed availability** | Bangla news RSS feeds may be unreliable. bdnews24 has known XML parsing issues. News feature degrades gracefully. |
 | **Twilio SMS** | Mocked in demo. Real SMS delivery requires a funded Twilio account. |
-| **Message persistence** | TBD — see Section 29 |
-| **Commit history** | Both team members must commit throughout the sprint. Judges audit this. |
+| **Messages persisted to SQLite** | Last 50 messages per channel loaded on join. Older messages remain in DB but are not loaded by default. |
+| **Photo uploads stored locally** | Missing person photos stored in `server/uploads/` directory. Not backed up remotely. |
+| **OKLCH browser support** | OKLCH is supported in all modern browsers (2024+). Falls back gracefully on older browsers via Tailwind's color system. |
+| **No shadcn/ui** | Decided against it. Custom component utilities (btn-primary, card, etc.) are lighter and more consistent with the OKLCH design system. |
+| **Commit history** | Both team members committed throughout the sprint. Judges audit this. |
 | **Open source licence** | MIT, as required by Track A guidelines. |
 
 ---
@@ -1000,6 +1150,7 @@ These were discussed but are explicitly out of scope for the hackathon sprint:
 
 | Feature | Reference Repo |
 |---|---|
+| Project architecture inspiration | [Crosstalk-Solutions/project-nomad](https://github.com/Crosstalk-Solutions/project-nomad) — Node for Offline Media, Archives, and Data |
 | LAN WebSocket chat | [yutakusuno/bun-hono-react-websocket](https://github.com/yutakusuno/bun-hono-react-websocket) |
 | Offline PWA boilerplate | [adueck/vite-offline-pwa-boilerplate](https://github.com/adueck/vite-offline-pwa-boilerplate) |
 | Community noticeboard | [barrygilreath3/community-bulletin-board](https://github.com/barrygilreath3/community-bulletin-board) |
@@ -1013,17 +1164,5 @@ These were discussed but are explicitly out of scope for the hackathon sprint:
 
 ---
 
-## 29. To Be Decided (TBD)
-
-| # | Decision | Options | Impact |
-|---|---|---|---|
-| TBD-01 | **Message persistence** | (A) In-memory only — messages lost on server restart. (B) Persist to SQLite. | Option A is simpler and sufficient for crisis use. Option B is better UX. Recommend B if time permits. |
-| TBD-02 | **Bangladesh .pmtiles distribution** | (A) Commit to repo with Git LFS. (B) Download script on first run. (C) Bundle in GitHub Release zip only. | Option C is cleanest for the hackathon. |
-| TBD-03 | **Single executable packaging** | (A) pkg. (B) Bun compile. (C) Ship as zip with Node.js required. | Option C is fastest for 72h. Options A/B are post-hackathon improvements. |
-| TBD-04 | **Photo uploads for missing persons** | (A) Store locally as files. (B) Store as base64 in SQLite. (C) Drop feature if time runs out. | Option A is cleanest. Option C is acceptable fallback. |
-| TBD-05 | **Bangla font rendering** | Ensure chosen system font stack renders Bangla correctly on Android. Test on a real device early. | High priority — must be verified on Day 1. |
-
----
-
-*Document maintained by the Mukto Mesh team. Last updated: July 27, 2026.*
+*Document maintained by the Mukto Mesh team. Last updated: July 28, 2026.*
 *This file is the single source of truth. All implementation decisions should be reflected here.*

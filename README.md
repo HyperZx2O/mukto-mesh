@@ -43,7 +43,7 @@ Mukto Mesh is built for the next time it happens. It turns any laptop into a loc
 |---|---|
 | **Real-time Chat** | WebSocket-based LAN chat with 4 channels (General, Emergency, Coordination, Medical). Unread badges. Emergency channel with red accent. |
 | **Community Noticeboard** | Tagged posts (Safety, Medical, Food, Legal, News, General). Admin pin/delete. Real-time WebSocket push. |
-| **Knowledge Base** | 5 sections bilingual (Bangla + English): Your Rights, First Aid, Emergency Contacts, Crisis Checklist, July 2024 Report. Bundled at build time — zero network requests. Searchable. |
+| **Knowledge Base** | 8 sections bilingual (Bangla + English): About Mukto Mesh, Quick Start Guide, Running a Node, Your Rights, First Aid, Emergency Contacts, Crisis Checklist, July 2024 Report. Bundled at build time — zero network requests. Searchable. |
 | **Safe Check-in** | Register with name + phone + interval. Tap "I'm Safe" before deadline. Auto-flagged as unresponsive on missed interval. Admin overview. Optional SMS via Twilio. |
 | **Missing Person Registry** | Submit name, age, location, photo. Search by name/location. Admin status management (missing/found/unverified). Auto-syncs to remote when internet returns. |
 | **Verified News Feed** | RSS from Prothom Alo, The Daily Star, bdnews24. Cached in SQLite for offline reading. Manual refresh button. |

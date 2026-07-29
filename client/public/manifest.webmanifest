@@ -1,0 +1,8 @@
+{
+  "name": "Mukto Mesh",
+  "short_name": "MuktoMesh",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#006A4E",
+  "background_color": "#0a0a0a"
+}

@@ -1,11 +1,19 @@
 @echo off
 title Mukto Mesh
+cd /d "%~dp0"
+
 echo ============================================
-echo   Mukto Mesh — one-click start
+echo   Mukto Mesh - one-click start
 echo ============================================
 echo.
 
-REM Install root dependencies
+REM Ensure root .env exists
+if not exist ".env" (
+    echo [PRE] Creating .env from server/.env ...
+    copy server\.env .env >nul
+)
+
+REM Install all dependencies
 echo [1/4] Installing dependencies...
 call npm install
 if %errorlevel% neq 0 (
@@ -32,41 +40,22 @@ if %errorlevel% neq 0 (
 )
 cd ..
 
-REM Download offline map tiles if missing
-set TILES_FILE=client\public\tiles\bangladesh.pmtiles
-if not exist "%TILES_FILE%" (
-    echo [2/4] Map tiles not found — downloading (540 MB)...
-    echo  This may take a few minutes.
-    if exist "scripts\download-tiles.ps1" (
-        powershell -ExecutionPolicy Bypass -File "scripts\download-tiles.ps1"
-    ) else if exist "scripts\download-tiles.sh" (
-        echo  Download script not available on Windows. Run manually:
-        echo  wget https://data.source.coop/protomaps/openstreetmap/planet/planet.pmtiles
-        echo  -o client/public/tiles/bangladesh.pmtiles
-    )
-    if %errorlevel% neq 0 (
-        echo.
-        echo  ⚠ Warning: Tile download failed. The map will show a blank background
-        echo    but all other features (chat, posts, check-in, etc.) will work fine.
-        echo.
-    ) else (
-        echo  ✅ Map tiles downloaded successfully.
-    )
+echo.
+echo  Map uses OpenFreeMap (online vector tiles). No download needed.
+echo [3/4] Preparing environment...
+if not exist ".env" (
+    copy server\.env .env >nul
+    echo .env created.
 ) else (
-    echo [2/4] Map tiles found — skipping download.
+    echo .env found.
 )
 
-echo.
-echo [3/4] Preparing environment...
-echo.
-
-REM Start both server + client in dev mode
+REM Start both server and client concurrently
 echo [4/4] Launching servers...
 echo.
-echo  Server : http://localhost:3000
-echo  Client : http://localhost:5173
+echo  Open http://localhost:5173 in your browser
+echo  Admin password: admin
 echo.
-echo  Share http://[YOUR-LAN-IP]:3000 on the same WiFi
 echo  Press Ctrl+C to stop both.
 echo ============================================
 

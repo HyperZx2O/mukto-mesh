@@ -2,6 +2,8 @@
 version: alpha
 name: BMW M-design-analysis
 description: A motorsport-engineering interface anchored on a near-black canvas with white BMW Type Next Latin display headlines in confident UPPERCASE. The brand carries no decorative voltage — its energy comes from full-bleed automotive photography (cars on tracks, driver-cockpit shots, carbon-fiber detail) and the iconic M tricolor stripe (light blue → dark blue → red) used sparingly as a brand signature on logos, dividers, and motorsport chrome. Type stays light to medium weight to feel European-engineered, never American-bombastic.
+hallmark: studied-DNA (2026-07-29)
+hallmark-note: "Locked design system for Mukto Mesh BMW M redesign. Tokens emitted as CSS custom properties in client/src/styles/tokens.css. Inter substitutes for BMW Type Next Latin; Noto Sans Bengali added for Bengali script support. See client/src/index.css for Hallmark stamp."
 
 colors:
   primary: "#ffffff"
