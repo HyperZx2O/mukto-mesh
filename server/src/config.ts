@@ -1,5 +1,3 @@
-import 'dotenv/config'
-
 const missing: string[] = []
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD

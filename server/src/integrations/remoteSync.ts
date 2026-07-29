@@ -1,7 +1,8 @@
+import { Hono } from 'hono'
 import { config } from '../config.js'
 import { log } from '../logger.js'
-import { getUnsyncedMissing, markMissingSynced } from '../db/missing.js'
-import { getUnsyncedPins, markPinsSynced } from '../db/pins.js'
+import { getUnsyncedMissing, markMissingSynced, upsertMissingBatch } from '../db/missing.js'
+import { getUnsyncedPins, markPinsSynced, upsertPinBatch } from '../db/pins.js'
 
 const SYNC_INTERVAL_MS = 5 * 60 * 1000
 
@@ -56,6 +57,28 @@ export async function syncToRemote(): Promise<void> {
     }
   }
 }
+
+const syncRouter = new Hono()
+
+syncRouter.post('/missing', async (c) => {
+  const { entries } = await c.req.json()
+  if (!Array.isArray(entries)) {
+    return c.json({ data: null, error: 'Invalid payload' }, 400)
+  }
+  upsertMissingBatch(entries)
+  return c.json({ data: { synced: entries.length }, error: null })
+})
+
+syncRouter.post('/pins', async (c) => {
+  const { pins } = await c.req.json()
+  if (!Array.isArray(pins)) {
+    return c.json({ data: null, error: 'Invalid payload' }, 400)
+  }
+  upsertPinBatch(pins)
+  return c.json({ data: { synced: pins.length }, error: null })
+})
+
+export { syncRouter }
 
 export function startSyncJob() {
   syncToRemote()

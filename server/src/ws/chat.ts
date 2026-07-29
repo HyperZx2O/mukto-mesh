@@ -1,6 +1,16 @@
 import crypto from 'crypto'
 import { createMessage, getLastMessages } from '../db/messages.js'
-import { WsEvent } from '../types.js'
+
+export enum WsEvent {
+  JOIN = 'join',
+  MESSAGE = 'message',
+  SWITCH_CHANNEL = 'switch_channel',
+  POST_CREATED = 'post_created',
+  POST_PINNED = 'post_pinned',
+  CHECKIN_FLAGGED = 'checkin_flagged',
+  BROADCAST = 'broadcast',
+  MESSAGES_CLEARED = 'messages_cleared',
+}
 
 export const CHANNELS = ['general', 'emergency', 'coordination', 'medical'] as const
 export type Channel = (typeof CHANNELS)[number]

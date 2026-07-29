@@ -7,8 +7,21 @@ const VALID_PIN_TYPES = ['shelter', 'danger', 'missing', 'medical', 'general']
 const pins = new Hono()
 
 pins.get('/', (c) => {
-  const rows = getAllPins()
-  return c.json({ data: rows, error: null })
+  const rows = getAllPins() as Record<string, unknown>[]
+  return c.json({
+    data: rows.map((r) => ({
+      id: r.id,
+      label: r.label,
+      type: r.type,
+      lat: r.lat,
+      lng: r.lng,
+      description: r.description,
+      userId: r.user_id,
+      synced: r.synced === 1,
+      createdAt: r.created_at,
+    })),
+    error: null,
+  })
 })
 
 pins.post('/', async (c) => {

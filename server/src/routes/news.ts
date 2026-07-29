@@ -5,8 +5,19 @@ import { fetchNews } from '../jobs/newsFetcher.js'
 const news = new Hono()
 
 news.get('/', (c) => {
-  const rows = getAllNews()
-  return c.json({ data: rows, error: null })
+  const rows = getAllNews() as Record<string, unknown>[]
+  return c.json({
+    data: rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      source: r.source,
+      url: r.url,
+      content: r.content,
+      publishedAt: r.published_at,
+      fetchedAt: r.fetched_at,
+    })),
+    error: null,
+  })
 })
 
 news.post('/refresh', async (c) => {

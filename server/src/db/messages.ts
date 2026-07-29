@@ -19,10 +19,21 @@ export function createMessage(data: {
   return { id, createdAt: now }
 }
 
+export function deleteAllMessages() {
+  getDB().prepare('DELETE FROM messages').run()
+}
+
 export function getLastMessages(channel: string, limit = 50) {
   const db = getDB()
   const rows = db.prepare(
     'SELECT * FROM messages WHERE channel = ? ORDER BY created_at DESC LIMIT ?'
   ).all(channel, limit) as Record<string, unknown>[]
-  return rows.reverse()
+  return rows.reverse().map((r) => ({
+    id: r.id,
+    userId: r.user_id,
+    displayName: r.display_name,
+    channel: r.channel,
+    content: r.content,
+    createdAt: r.created_at,
+  }))
 }

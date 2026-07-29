@@ -10,25 +10,19 @@ import { createWSHandler } from './ws/chat.js'
 import path from 'path'
 import fs from 'fs'
 
-// Tiles are served from client/public/tiles/ relative to project root
-// In production, Vite copies public/ to dist/, so check both locations
-const PUBLIC_DIR = path.resolve(process.cwd(), '../client/public')
-const DIST_DIR = path.resolve(process.cwd(), '../client/dist')
-
 // Routes
 import posts from './routes/posts.js'
 import missing from './routes/missing.js'
 import checkin from './routes/checkin.js'
 import news from './routes/news.js'
 import pins from './routes/pins.js'
-import sync from './routes/sync.js'
 import admin from './routes/admin.js'
 import messages from './routes/messages.js'
 
 // Jobs
 import { startCheckinMonitor } from './jobs/checkinMonitor.js'
 import { startNewsFetcher } from './jobs/newsFetcher.js'
-import { startSyncJob } from './integrations/remoteSync.js'
+import { syncRouter, startSyncJob } from './integrations/remoteSync.js'
 
 const app = new Hono()
 
@@ -42,26 +36,6 @@ app.use('*', async (c, next) => {
 
 app.use('*', cors())
 
-// Serve map tiles from client/public/tiles/ — PMTiles needs HTTP Range support
-// Fall back to dist/ in production (Vite copies public/ to dist/ on build)
-app.use('/tiles/*', async (c, next) => {
-  await next()
-  // Ensure PMTiles files get correct headers for HTTP Range requests
-  if (c.req.path.endsWith('.pmtiles') && c.res.status === 200) {
-    // Set proper content type if not already set
-    if (!c.res.headers.get('Content-Type')) {
-      c.res.headers.set('Content-Type', 'application/octet-stream')
-    }
-    c.res.headers.set('Accept-Ranges', 'bytes')
-    c.res.headers.set('Cache-Control', 'public, max-age=86400')
-  }
-})
-// Try public/ first (dev), fall back to dist/ (prod build)
-app.use('/tiles/*', serveStatic({ root: PUBLIC_DIR }))
-if (fs.existsSync(path.join(DIST_DIR, 'tiles'))) {
-  app.use('/tiles/*', serveStatic({ root: DIST_DIR }))
-}
-
 // Serve uploaded photos
 app.use('/uploads/*', serveStatic({ root: path.resolve(process.cwd()) }))
 
@@ -74,7 +48,7 @@ app.route('/api/missing', missing)
 app.route('/api/checkin', checkin)
 app.route('/api/news', news)
 app.route('/api/pins', pins)
-app.route('/api/sync', sync)
+app.route('/api/sync', syncRouter)
 app.route('/api/admin', admin)
 app.route('/api/messages', messages)
 

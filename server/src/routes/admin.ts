@@ -3,7 +3,8 @@ import jwt from 'jsonwebtoken'
 import { config } from '../config.js'
 import { getConnectionCount, broadcastToAll } from '../ws/chat.js'
 import { adminAuth } from '../middleware/adminAuth.js'
-import { WsEvent } from '../types.js'
+import { WsEvent } from '../ws/chat.js'
+import { deleteAllMessages } from '../db/messages.js'
 
 const admin = new Hono()
 
@@ -23,6 +24,12 @@ admin.get('/connections', adminAuth, (c) => {
 admin.post('/broadcast', adminAuth, async (c) => {
   const { message } = await c.req.json()
   broadcastToAll({ type: WsEvent.BROADCAST, message, createdAt: Date.now() })
+  return c.json({ data: { ok: true }, error: null })
+})
+
+admin.delete('/messages', adminAuth, async (c) => {
+  deleteAllMessages()
+  broadcastToAll({ type: WsEvent.MESSAGES_CLEARED, clearedAt: Date.now() })
   return c.json({ data: { ok: true }, error: null })
 })
 

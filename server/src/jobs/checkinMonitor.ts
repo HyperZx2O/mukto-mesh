@@ -3,7 +3,7 @@ import { createPost } from '../db/posts.js'
 import { broadcastToAll } from '../ws/chat.js'
 import { log } from '../logger.js'
 import { sendSms } from '../integrations/twilio.js'
-import { WsEvent } from '../types.js'
+import { WsEvent } from '../ws/chat.js'
 
 const CHECK_INTERVAL_MS = 60 * 1000
 

@@ -2,15 +2,26 @@ import { Hono } from 'hono'
 import { getAllPosts, getPostById, createPost as dbCreatePost, setPinned, deletePost } from '../db/posts.js'
 import { broadcastToAll } from '../ws/chat.js'
 import { adminAuth } from '../middleware/adminAuth.js'
-import { WsEvent } from '../types.js'
+import { WsEvent } from '../ws/chat.js'
 
 const VALID_TAGS = ['safety', 'medical', 'food', 'legal', 'news', 'general']
 
 const posts = new Hono()
 
 posts.get('/', (c) => {
-  const rows = getAllPosts()
-  return c.json({ data: rows, error: null })
+  const rows = getAllPosts() as Record<string, unknown>[]
+  return c.json({
+    data: rows.map((r) => ({
+      id: r.id,
+      userId: r.user_id,
+      displayName: r.display_name,
+      tag: r.tag,
+      content: r.content,
+      pinned: r.pinned === 1,
+      createdAt: r.created_at,
+    })),
+    error: null,
+  })
 })
 
 posts.post('/', async (c) => {
@@ -30,7 +41,16 @@ posts.post('/', async (c) => {
     return c.json({ data: null, error: 'content cannot be empty after trimming whitespace' }, 400)
   }
 
-  const post = dbCreatePost({ display_name, user_id, tag, content: trimmed })
+  const raw = dbCreatePost({ display_name, user_id, tag, content: trimmed }) as Record<string, unknown>
+  const post = {
+    id: raw.id,
+    userId: raw.user_id,
+    displayName: raw.display_name,
+    tag: raw.tag,
+    content: raw.content,
+    pinned: raw.pinned === 1,
+    createdAt: raw.created_at,
+  }
   broadcastToAll({ type: WsEvent.POST_CREATED, post })
   return c.json({ data: post, error: null }, 201)
 })
