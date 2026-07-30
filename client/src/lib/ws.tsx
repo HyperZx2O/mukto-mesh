@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000/ws'
+const WS_URL = import.meta.env.VITE_WS_URL || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
 import { useAuthStore } from '@/store/useAuthStore'
 import { useChatStore } from '@/store/useChatStore'
 import { playCue } from '@/lib/uiSFX'
