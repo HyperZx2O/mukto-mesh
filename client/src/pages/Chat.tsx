@@ -8,6 +8,7 @@ import type { Channel } from '@/types'
 const CHANNELS: Channel[] = ['general', 'emergency', 'coordination', 'medical']
 import ChannelTab from '@/components/Chat/ChannelTab'
 import MessageBubble from '@/components/Chat/MessageBubble'
+import OnlineUsers from '@/components/Chat/OnlineUsers'
 
 export default function Chat() {
   const lang = useLanguageStore((s) => s.lang)
@@ -77,6 +78,8 @@ export default function Chat() {
           />
         ))}
       </div>
+
+      <OnlineUsers variant="strip" channel={activeChannel} />
 
       <div ref={listRef} className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (

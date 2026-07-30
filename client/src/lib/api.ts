@@ -10,6 +10,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<ApiRespo
     if (!(options?.body instanceof FormData)) headers['Content-Type'] = 'application/json'
 
     const res = await fetch(`${API_URL}${path}`, { headers, ...options })
+    if (res.status === 401) {
+      useAuthStore.getState().logout()
+    }
     return await res.json()
   } catch {
     return { data: null, error: 'Network error — you may be offline' }

@@ -71,6 +71,13 @@ export interface MapPin {
   createdAt: number
 }
 
+export interface ConnectedUser {
+  id: string
+  displayName: string
+  channel: Channel
+  connectedAt: number
+}
+
 export interface NodeStatus {
   connectedUsers: number
   checkins: {

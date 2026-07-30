@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/useAuthStore'
 import { useWs } from '@/lib/ws'
 import { api } from '@/lib/api'
 import { timeAgo } from '@/lib/utils'
+import OnlineUsers from '@/components/Chat/OnlineUsers'
 import type { Post, MissingPerson, NewsArticle, MapPin, NodeStatus, ApiResponse } from '@/types'
 import {
   MessageSquare, ClipboardList, BookOpen, Users, MapPin as MapPinIcon,
@@ -320,31 +321,39 @@ export default function Dashboard() {
           )}
         </section>
 
-        {/* Community Stats Footer: 2-col mobile, 3-col tablet, 6-col desktop */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 pt-5 sm:pt-6 border-t border-border">
-          <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{connectedUsers}</p>
-            <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Online', 'অনলাইন')}</p>
+        {/* Online Users Panel + Community Stats Footer */}
+        <div className="lg:grid lg:grid-cols-4 gap-6 pt-5 sm:pt-6 border-t border-border">
+          <div className="lg:col-span-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+              <div className="text-center p-2 sm:p-3">
+                <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{connectedUsers}</p>
+                <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Online', 'অনলাইন')}</p>
+              </div>
+              <div className="text-center p-2 sm:p-3">
+                <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{totalCheckins}</p>
+                <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Check-ins', 'চেক-ইন')}</p>
+              </div>
+              <div className="text-center p-2 sm:p-3">
+                <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{posts.length}</p>
+                <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Posts', 'পোস্ট')}</p>
+              </div>
+              <div className="text-center p-2 sm:p-3">
+                <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{missing.length}</p>
+                <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Reports', 'রিপোর্ট')}</p>
+              </div>
+              <div className="text-center p-2 sm:p-3">
+                <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{news.length}</p>
+                <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('News', 'সংবাদ')}</p>
+              </div>
+              <div className="text-center p-2 sm:p-3">
+                <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{pins.length}</p>
+                <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Pins', 'পিন')}</p>
+              </div>
+            </div>
           </div>
-          <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{totalCheckins}</p>
-            <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Check-ins', 'চেক-ইন')}</p>
-          </div>
-          <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{posts.length}</p>
-            <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Posts', 'পোস্ট')}</p>
-          </div>
-          <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{missing.length}</p>
-            <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Reports', 'রিপোর্ট')}</p>
-          </div>
-          <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{news.length}</p>
-            <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('News', 'সংবাদ')}</p>
-          </div>
-          <div className="text-center p-2 sm:p-3">
-            <p className="text-body sm:text-subhead font-bold text-text-heading tabular-nums">{pins.length}</p>
-            <p className="text-caption text-text-muted uppercase tracking-wider leading-tight">{t('Pins', 'পিন')}</p>
+
+          <div className="mt-6 lg:mt-0 p-3 sm:p-4 bg-surface border border-border rounded">
+            <OnlineUsers variant="panel" />
           </div>
         </div>
       </div>

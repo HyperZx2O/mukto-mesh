@@ -10,6 +10,7 @@ export enum WsEvent {
   CHECKIN_FLAGGED = 'checkin_flagged',
   BROADCAST = 'broadcast',
   MESSAGES_CLEARED = 'messages_cleared',
+  USER_LIST = 'user_list',
 }
 
 export const CHANNELS = ['general', 'emergency', 'coordination', 'medical'] as const
@@ -37,6 +38,20 @@ function removeClient(ws: WsClient['ws']) {
 
 export function getConnectionCount(): number {
   return clients.size
+}
+
+export function getConnectionList() {
+  return Array.from(clients.values()).map((c) => ({
+    id: c.id,
+    displayName: c.displayName,
+    channel: c.channel,
+    connectedAt: c.connectedAt,
+  }))
+}
+
+function broadcastUserList() {
+  const list = getConnectionList()
+  broadcastToAll({ type: WsEvent.USER_LIST, users: list })
 }
 
 export function broadcastToChannel(channel: Channel, event: object) {
@@ -74,6 +89,7 @@ export function createWSHandler() {
 
           const messages = getLastMessages(client.channel, 50)
           send(ws, { type: 'join_ack', channel: client.channel, messages })
+          broadcastUserList()
           break
         }
 
@@ -101,6 +117,7 @@ export function createWSHandler() {
 
           const messages = getLastMessages(client.channel, 50)
           send(ws, { type: 'join_ack', channel: client.channel, messages })
+          broadcastUserList()
           break
         }
       }
@@ -108,6 +125,7 @@ export function createWSHandler() {
 
     onClose(_evt: unknown, ws: WsClient['ws']) {
       removeClient(ws)
+      broadcastUserList()
       console.log(`[WS] Client disconnected (${clients.size} total)`)
     },
   }

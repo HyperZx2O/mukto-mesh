@@ -1,6 +1,16 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = token.split('.')[1]
+    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+    return decoded.exp * 1000 < Date.now()
+  } catch {
+    return true
+  }
+}
+
 interface AuthState {
   displayName: string
   userId: string
@@ -22,6 +32,13 @@ export const useAuthStore = create<AuthState>()(
       setAdmin: (token) => set({ isAdmin: true, adminToken: token }),
       logout: () => set({ isAdmin: false, adminToken: null }),
     }),
-    { name: 'mukto-mesh-auth' }
+    {
+      name: 'mukto-mesh-auth',
+      onRehydrateStorage: () => (state) => {
+        if (state?.adminToken && isTokenExpired(state.adminToken)) {
+          state.logout()
+        }
+      },
+    }
   )
 )

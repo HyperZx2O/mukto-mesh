@@ -54,7 +54,7 @@ app.route('/api/messages', messages)
 
 // Public node status endpoint (lightweight, no auth needed)
 // Returns connection count and check-in summary for the Dashboard
-import { getConnectionCount } from './ws/chat.js'
+import { getConnectionCount, getConnectionList } from './ws/chat.js'
 import { getAllCheckins } from './db/checkins.js'
 
 app.get('/api/status', (c) => {
@@ -72,6 +72,11 @@ app.get('/api/status', (c) => {
     },
     error: null,
   })
+})
+
+app.get('/api/status/users', (c) => {
+  const users = getConnectionList()
+  return c.json({ data: users, error: null })
 })
 
 // Start background jobs

@@ -168,18 +168,20 @@ function ClearChatButton() {
   const [confirming, setConfirming] = useState(false)
   const [clearing, setClearing] = useState(false)
   const [done, setDone] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleClear = async () => {
     setClearing(true)
-    try {
-      await api.delete('/api/admin/messages')
+    setError(null)
+    const res = await api.delete<{ ok: boolean }>('/api/admin/messages')
+    if (res.error) {
+      setError(res.error)
+      playCue('error')
+    } else {
       setDone(true)
       setConfirming(false)
-    } catch {
-      playCue('error')
-    } finally {
-      setClearing(false)
     }
+    setClearing(false)
   }
 
   if (done) {
@@ -211,12 +213,17 @@ function ClearChatButton() {
   }
 
   return (
-    <button
-      onClick={() => setConfirming(true)}
-      className="border border-danger text-danger font-bold uppercase tracking-wider px-4 py-2 hover:bg-danger hover:text-white transition-colors min-h-[44px]"
-    >
-      {t('Clear Chat History', 'চ্যাট ইতিহাস মুছুন')}
-    </button>
+    <div className="space-y-3">
+      <button
+        onClick={() => setConfirming(true)}
+        className="border border-danger text-danger font-bold uppercase tracking-wider px-4 py-2 hover:bg-danger hover:text-white transition-colors min-h-[44px]"
+      >
+        {t('Clear Chat History', 'চ্যাট ইতিহাস মুছুন')}
+      </button>
+      {error && (
+        <p className="text-sm text-danger">{error}</p>
+      )}
+    </div>
   )
 }
 

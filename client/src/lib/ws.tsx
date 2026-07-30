@@ -4,18 +4,21 @@ import { useAuthStore } from '@/store/useAuthStore'
 import { useChatStore } from '@/store/useChatStore'
 import { playCue } from '@/lib/uiSFX'
 import type { QueryClient } from '@tanstack/react-query'
+import type { ConnectedUser } from '@/types'
 
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
 interface WsState {
   connectionStatus: ConnectionStatus
   broadcast: string | null
+  onlineUsers: ConnectedUser[]
   dismissBroadcast: () => void
 }
 
 export const useWs = create<WsState>((set) => ({
   connectionStatus: 'disconnected',
   broadcast: null,
+  onlineUsers: [],
   dismissBroadcast: () => set({ broadcast: null }),
 }))
 
@@ -23,6 +26,7 @@ let ws: WebSocket | null = null
 let retries = 0
 let timer: number | null = null
 let qc: QueryClient | null = null
+let connGen = 0
 
 export function setQueryClient(queryClient: QueryClient) {
   qc = queryClient
@@ -30,9 +34,11 @@ export function setQueryClient(queryClient: QueryClient) {
 
 function connect() {
   useWs.setState({ connectionStatus: 'connecting' })
+  const gen = ++connGen
   ws = new WebSocket(WS_URL)
 
   ws.onopen = () => {
+    if (gen !== connGen) return
     useWs.setState({ connectionStatus: 'connected' })
     playCue('connect')
     retries = 0
@@ -64,11 +70,15 @@ function connect() {
         case 'broadcast':
           useWs.setState({ broadcast: msg.message || '' })
           break
+        case 'user_list':
+          useWs.setState({ onlineUsers: (msg.users || []) as ConnectedUser[] })
+          break
       }
     } catch { /* skip malformed */ }
   }
 
   ws.onclose = () => {
+    if (gen !== connGen) return
     useWs.setState({ connectionStatus: 'disconnected' })
     playCue('disconnect')
     if (retries < 5) {
@@ -81,6 +91,7 @@ function connect() {
   }
 
   ws.onerror = () => {
+    if (gen !== connGen) return
     useWs.setState({ connectionStatus: 'error' })
   }
 }
@@ -90,6 +101,7 @@ export function initWs() {
 }
 
 export function closeWs() {
+  connGen++
   ws?.close()
   if (timer !== null) clearTimeout(timer)
 }
