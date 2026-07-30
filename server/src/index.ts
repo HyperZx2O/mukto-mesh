@@ -91,7 +91,7 @@ app.onError((err, c) => {
 
 // Serve built client static files in production
 if (config.NODE_ENV === 'production' || process.argv.includes('--serve-static')) {
-  const CLIENT_DIST = path.resolve(process.cwd(), '../client/dist')
+  const CLIENT_DIST = path.resolve(__dirname, '../../client/dist')
   app.use('/*', serveStatic({ root: CLIENT_DIST }))
   app.get('*', (c) => {
     // SPA fallback — serve index.html for all non-API routes
